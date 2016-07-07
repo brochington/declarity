@@ -1,5 +1,8 @@
 class Entity {
-    id: Math.random()
+    something() {
+        return "here";
+    }
+    // entityId = Math.random()
 }
 
 export default Entity;
