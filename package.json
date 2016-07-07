@@ -1,0 +1,19 @@
+{
+  "name": "declarity",
+  "version": "0.0.1",
+  "description": "A declarative way to organize application code",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brochington/declarity.git"
+  },
+  "author": "Broch Stilley",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brochington/declarity/issues"
+  },
+  "homepage": "https://github.com/brochington/declarity#readme"
+}
