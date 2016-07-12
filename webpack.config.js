@@ -12,9 +12,6 @@ module.exports = {
         library: "declarity",
         libraryTarget: "umd"
     },
-    resolve: {
-        extensions: ['', '.js', '.jsx']
-    },
     externals: {
         "immutable": "immutable"
     },
@@ -27,10 +24,6 @@ module.exports = {
                 cacheDirectory: true,
                 presets: ["es2015", "stage-0"]
             }
-        }, {
-            test: /\.js$/,
-            loader: "eslint-loader",
-            exclude: /node_modules/
         }]
     },
     resolve: {
