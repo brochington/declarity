@@ -1,7 +1,12 @@
+/* Classes */
 import importEntity from './Entity';
 
-export default {
-    Entity: importEntity
-};
+/* functions */
+import {register} from './register';
+import {createEntity} from './createEntity';
 
-export const Entity = importEntity;
+export default {
+    Entity: importEntity,
+    register,
+    createEntity
+};

@@ -22,7 +22,8 @@
     "url": "https://github.com/brochington/declarity/issues"
   },
   "dependencies": {
-    "immutable": "^3.7.5"
+    "immutable": "^3.7.5",
+    "lodash": "^4.13.1"
   },
   "devDependencies": {
     "babel-core": "^6.7.4",
@@ -41,6 +42,6 @@
     "jsdoc-babel": "^0.1.0",
     "rimraf": "^2.4.3",
     "webpack": "^1.12.2"
-},
+  },
   "homepage": "https://github.com/brochington/declarity#readme"
 }
