@@ -71,9 +71,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _Entity2 = _interopRequireDefault(_Entity);
 
-	var _register = __webpack_require__(3);
+	var _register = __webpack_require__(6);
 
-	var _createEntity = __webpack_require__(4);
+	var _createEntity = __webpack_require__(7);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -86,478 +86,49 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 2 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+
+	var _string = __webpack_require__(3);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var Entity = function Entity() {
 	    _classCallCheck(this, Entity);
 
-	    this.entityId = Math.random();
+	    this.entityId = (0, _string.createRandomString)();
 	};
 
 	exports.default = Entity;
 
 /***/ },
 /* 3 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	var register = exports.register = function register(entityToRegister) {
-	    console.log('register this junk!', entityToRegister);
-	    console.time('mount');
-	    entityToRegister.mount();
-	    console.timeEnd('mount');
-	};
+	exports.createRandomString = createRandomString;
+
+	var _lodash = __webpack_require__(4);
+
+	var chars = "abcdefghijklmnopqrstufwxyzABCDEFGHIJKLMNOPQRSTUFWXYZ1234567890".split('');
+
+	function createRandomString() {
+	    var length = arguments.length <= 0 || arguments[0] === undefined ? 12 : arguments[0];
+
+	    return (0, _lodash.sampleSize)(chars, length).join("");
+	}
 
 /***/ },
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.createEntity = undefined;
-
-	var _EntityWrapper = __webpack_require__(5);
-
-	var _EntityWrapper2 = _interopRequireDefault(_EntityWrapper);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	var createEntity = exports.createEntity = function createEntity(entityClass, props) {
-	    for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-	        children[_key - 2] = arguments[_key];
-	    }
-
-	    return new _EntityWrapper2.default(entityClass, props, children);
-	};
-
-/***/ },
-/* 5 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _StateManager = __webpack_require__(6);
-
-	var _StateManager2 = _interopRequireDefault(_StateManager);
-
-	var _lodash = __webpack_require__(8);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	/* Recusively call a method on all children */
-	function callMethodOnChildren(methodName, children) {
-	    // console.log('callMethodOnChildren', children);
-	    if (!(0, _lodash.isArray)(children) || children.length <= 0) {
-	        return;
-	    }
-
-	    (0, _lodash.forEach)(children, function (child) {
-	        if (child.hasOwnProperty(methodName) && typeof child[methodName] === 'function') {
-	            child[methodName]();
-	        }
-	    });
-	}
-
-	function getRenderContent(entityClassInstance) {
-	    var content = entityClassInstance.render();
-
-	    if ((0, _lodash.isNil)(content)) return [];
-
-	    return (0, _lodash.isArray)(content) ? content : [content];
-	}
-
-	var EntityWrapper = function EntityWrapper(entityClass, props, children) {
-	    var _this = this;
-
-	    _classCallCheck(this, EntityWrapper);
-
-	    this.updateStuff = function (state) {
-	        console.log('updateStuff, yo', state, _this);
-	    };
-
-	    this.mount = function () {
-	        _this._entityClassInstance = new _this.entityClass();
-
-	        if (_this._entityClassInstance.hasOwnProperty('willMount')) {
-	            _this._entityClassInstance.willMount(); // pass any props here?
-	        }
-
-	        // console.log("this._entityClassInstance.hasOwnProperty('render')", this._entityClassInstance.render);
-	        // console.dir(this._entityClassInstance);
-	        var renderContent = typeof _this._entityClassInstance.render === 'function' ? getRenderContent(_this._entityClassInstance) : _this.children;
-
-	        // console.log('renderContent', renderContent);
-	        callMethodOnChildren('mount', renderContent);
-
-	        if (_this._entityClassInstance.hasOwnProperty('didMount')) {
-	            _this._entityClassInstance.didMount(); // pass any props here?
-	        }
-	    };
-
-	    this.unmount = function () {
-	        if (_this._entityClassInstance.hasOwnProperty('willUnmount')) {
-	            _this._entityClassInstance.willUnmount(); // pass any props here?
-	        }
-
-	        // callMethodOnChildren('unmount', this.children);
-
-	        if (_this._entityClassInstance.hasOwnProperty('didUnmount')) {
-	            _this._entityClassInstance.didUnmount(); // pass any props here?
-	        }
-	    };
-
-	    props = (0, _lodash.isNil)(props) ? {} : props;
-	    children = (0, _lodash.isArray)(children) ? (0, _lodash.flatten)(children) : [];
-
-	    this.entityClass = entityClass;
-	    this.props = props;
-	    this.children = children;
-	    this.systems = props.hasOwnProperty('systems') && Array.isArray(props.systems) ? props.systems : [];
-
-	    if (entityClass.hasOwnProperty('actions')) {
-	        this.stateManager = new _StateManager2.default();
-
-	        this.stateManager.init(entityClass.actions, function () {
-	            return {};
-	        }, // initial state...
-	        function (state, actions) {
-	            return _this.updateStuff(state);
-	        });
-	    }
-	}
-
-	// called when entity is mounted.
-	;
-
-	exports.default = EntityWrapper;
-
-/***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _lodash = __webpack_require__(8);
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var _state = Symbol("state");
-	var _actions = Symbol("actions");
-	var _wrappedActions = Symbol("wrappedActions");
-	var _stateSetCallback = Symbol("stateSetCallback");
-	var _hasBeenInitialized = Symbol("hasBeenInitialized");
-
-	var StateManager = function () {
-	    function StateManager() {
-	        var _this = this;
-
-	        _classCallCheck(this, StateManager);
-
-	        this.wrapActions = function (acc, val, name) {
-	            if (typeof val === "function") {
-	                acc[name] = function () {
-	                    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-	                        args[_key] = arguments[_key];
-	                    }
-
-	                    return _this.actionWrapper.apply(_this, [name, val].concat(args));
-	                };
-	            }
-	            return acc;
-	        };
-
-	        this.handleActionReturnTypes = function (newState) {
-	            // if (newState instanceof Promise) {
-	            if (typeof newState.then === 'function') {
-	                newState.then(_this.callSetStateCallback);
-	            }
-
-	            // Detect if newState is actually a generator function.
-	            else if (typeof newState.next === 'function') {
-	                    _this.generatorHandler(newState);
-	                }
-
-	                // newState should be an immutable object.
-	                else {
-	                        _this.callSetStateCallback(newState);
-	                    }
-	        };
-
-	        this.generatorHandler = function (genObject) {
-	            var _genObject$next = genObject.next();
-
-	            var value = _genObject$next.value;
-	            var done = _genObject$next.done;
-
-
-	            value && _this.handleActionReturnTypes(value);
-
-	            if (!done) {
-	                _this.generatorHandler(genObject);
-	            }
-	        };
-
-	        this.callSetStateCallback = function (newState) {
-	            // call the callback specified in the init method.
-	            _this[_stateSetCallback](_this[_state], _this[_wrappedActions]);
-	        };
-
-	        this._loggingEnabled = process.env.NODE_ENV == 'development' ? true : false;
-
-	        this.enableLogging = function () {
-	            _this._loggingEnabled = true;
-	            return "stateManager logging is enabled";
-	        };
-
-	        this.disableLogging = function () {
-	            _this._loggingEnabled = false;
-	            return "stateManager logging is disabled";
-	        };
-	    }
-
-	    _createClass(StateManager, [{
-	        key: "init",
-	        value: function init(actions, initFunc, stateSetCallback) {
-	            // attach stateManager to window for debugging
-	            if (window) window.stateManager = this;
-
-	            try {
-	                if (!this[_hasBeenInitialized]) {
-	                    this[_hasBeenInitialized] = true;
-
-	                    /* wrap actions */
-	                    var wrappedActions = (0, _lodash.reduce)(actions, this.wrapActions, {});
-	                    console.log('wrappedActions!', wrappedActions);
-	                    this[_wrappedActions] = _extends({}, wrappedActions);
-
-	                    this[_actions] = actions;
-
-	                    /* Set initial state from init function */
-	                    this[_state] = initFunc(this[_wrappedActions]);
-
-	                    /* set state callback, most likely a setState React method */
-	                    this[_stateSetCallback] = stateSetCallback;
-	                } else {
-	                    throw new Error("StateManager has already been initialized");
-	                }
-	            } catch (e) {
-	                console.error(e);
-	            }
-	        }
-	    }, {
-	        key: "actionWrapper",
-
-
-	        /* injects state and actions as args into actions that are called. */
-	        value: function actionWrapper(name, func) {
-	            var _this2 = this;
-
-	            // call the action function with correct args.
-	            if (this._loggingEnabled) {
-	                console.log("action: ", name);
-	            }
-
-	            for (var _len2 = arguments.length, args = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
-	                args[_key2 - 2] = arguments[_key2];
-	            }
-
-	            var newState = func.apply(undefined, [function () {
-	                return _this2[_state];
-	            }, this[_wrappedActions]].concat(args));
-
-	            this.handleActionReturnTypes(newState);
-
-	            return this[_state];
-	        }
-
-	        /* handles standard values, promises (from async functions) and generator function return values */
-
-
-	        /* A recursive function to handle the output of generator functions. */
-
-
-	        /* Calls the setState callback */
-
-
-	        /* Debugging assist methods */
-
-	    }, {
-	        key: "actions",
-	        get: function get() {
-	            return this[_wrappedActions];
-	        }
-	    }, {
-	        key: "appState",
-	        get: function get() {
-	            return this[_state];
-	        }
-
-	        /* wraps actions with... the actionWrapper */
-
-	    }]);
-
-	    return StateManager;
-	}();
-
-	exports.default = StateManager;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
-
-/***/ },
-/* 7 */
-/***/ function(module, exports) {
-
-	// shim for using process in browser
-
-	var process = module.exports = {};
-
-	// cached from whatever global is present so that test runners that stub it
-	// don't break things.  But we need to wrap it in a try catch in case it is
-	// wrapped in strict mode code which doesn't define any globals.  It's inside a
-	// function because try/catches deoptimize in certain engines.
-
-	var cachedSetTimeout;
-	var cachedClearTimeout;
-
-	(function () {
-	  try {
-	    cachedSetTimeout = setTimeout;
-	  } catch (e) {
-	    cachedSetTimeout = function () {
-	      throw new Error('setTimeout is not defined');
-	    }
-	  }
-	  try {
-	    cachedClearTimeout = clearTimeout;
-	  } catch (e) {
-	    cachedClearTimeout = function () {
-	      throw new Error('clearTimeout is not defined');
-	    }
-	  }
-	} ())
-	var queue = [];
-	var draining = false;
-	var currentQueue;
-	var queueIndex = -1;
-
-	function cleanUpNextTick() {
-	    if (!draining || !currentQueue) {
-	        return;
-	    }
-	    draining = false;
-	    if (currentQueue.length) {
-	        queue = currentQueue.concat(queue);
-	    } else {
-	        queueIndex = -1;
-	    }
-	    if (queue.length) {
-	        drainQueue();
-	    }
-	}
-
-	function drainQueue() {
-	    if (draining) {
-	        return;
-	    }
-	    var timeout = cachedSetTimeout(cleanUpNextTick);
-	    draining = true;
-
-	    var len = queue.length;
-	    while(len) {
-	        currentQueue = queue;
-	        queue = [];
-	        while (++queueIndex < len) {
-	            if (currentQueue) {
-	                currentQueue[queueIndex].run();
-	            }
-	        }
-	        queueIndex = -1;
-	        len = queue.length;
-	    }
-	    currentQueue = null;
-	    draining = false;
-	    cachedClearTimeout(timeout);
-	}
-
-	process.nextTick = function (fun) {
-	    var args = new Array(arguments.length - 1);
-	    if (arguments.length > 1) {
-	        for (var i = 1; i < arguments.length; i++) {
-	            args[i - 1] = arguments[i];
-	        }
-	    }
-	    queue.push(new Item(fun, args));
-	    if (queue.length === 1 && !draining) {
-	        cachedSetTimeout(drainQueue, 0);
-	    }
-	};
-
-	// v8 likes predictible objects
-	function Item(fun, array) {
-	    this.fun = fun;
-	    this.array = array;
-	}
-	Item.prototype.run = function () {
-	    this.fun.apply(null, this.array);
-	};
-	process.title = 'browser';
-	process.browser = true;
-	process.env = {};
-	process.argv = [];
-	process.version = ''; // empty string to avoid regexp issues
-	process.versions = {};
-
-	function noop() {}
-
-	process.on = noop;
-	process.addListener = noop;
-	process.once = noop;
-	process.off = noop;
-	process.removeListener = noop;
-	process.removeAllListeners = noop;
-	process.emit = noop;
-
-	process.binding = function (name) {
-	    throw new Error('process.binding is not supported');
-	};
-
-	process.cwd = function () { return '/' };
-	process.chdir = function (dir) {
-	    throw new Error('process.chdir is not supported');
-	};
-	process.umask = function() { return 0; };
-
-
-/***/ },
-/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/**
@@ -16965,10 +16536,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}.call(this));
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(9)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)(module), (function() { return this; }())))
 
 /***/ },
-/* 9 */
+/* 5 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -16982,6 +16553,386 @@ return /******/ (function(modules) { // webpackBootstrap
 		return module;
 	}
 
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	var register = exports.register = function register(entityToRegister) {
+	    entityToRegister.mount();
+	};
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.createEntity = undefined;
+
+	var _EntityWrapper = __webpack_require__(8);
+
+	var _EntityWrapper2 = _interopRequireDefault(_EntityWrapper);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var createEntity = exports.createEntity = function createEntity(entityClass, props) {
+	    for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+	        children[_key - 2] = arguments[_key];
+	    }
+
+	    return new _EntityWrapper2.default(entityClass, props, children);
+	};
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	var _StateManager = __webpack_require__(9);
+
+	var _StateManager2 = _interopRequireDefault(_StateManager);
+
+	var _lodash = __webpack_require__(4);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function callMethodOnChildren(methodName, children) {
+	    for (var _len = arguments.length, args = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+	        args[_key - 2] = arguments[_key];
+	    }
+
+	    if (!(0, _lodash.isArray)(children) || children.length <= 0) {
+	        return;
+	    }
+
+	    (0, _lodash.forEach)(children, function (child) {
+	        if (child.hasOwnProperty(methodName) && typeof child[methodName] === 'function') {
+	            child[methodName].apply(child, args);
+	        }
+	    });
+	}
+
+	function getRenderContent(entityClassInstance) {
+	    var content = entityClassInstance.render();
+
+	    if ((0, _lodash.isNil)(content)) return [];
+
+	    return (0, _lodash.isArray)(content) ? content : [content];
+	}
+
+	var internalActions = {
+	    // TODO: add support for createFunc as an async/await function
+	    _createEntity: function _createEntity(state, actions, entityClass, entityId) {
+	        var created = entityClass.create(state);
+	        var newState = state();
+
+	        newState[entityId] = created;
+
+	        entityClass.didMount && entityClass.didMount();
+
+	        return newState;
+	    }
+	};
+
+	var EntityWrapper = function EntityWrapper(entityClass, props, children) {
+	    var _this = this;
+
+	    _classCallCheck(this, EntityWrapper);
+
+	    this.updateState = function (state) {
+	        // console.log('updateStuff, yo', state, this);
+	        // console.log(this.stateManager.state[this._entityClassInstance.entityId]);
+	        // Does the state manager have state object with the entityId of the entity instance?
+	        // if (this.stateManager.state[this._entityClassInstance.entityId]) {
+	        //     this._entityClassInstance.actions = this.stateManager.actions;
+	        //     this.update();
+	        // }
+	        // this._entityClassInstance.actions = this.stateManager.actions;
+
+	        _this.update();
+	    };
+
+	    this.mount = function () {
+	        var parentArgs = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	        var parentActions = parentArgs.parentActions;
+
+	        var combinedActions = _extends({}, parentActions ? parentActions : {}, _this.stateManager ? _this.stateManager.actions : {});
+
+	        _this._entityClassInstance = new _this.entityClass();
+	        _this._entityClassInstance.actions = combinedActions;
+
+	        if (_this._entityClassInstance.hasOwnProperty('willMount')) {
+	            _this._entityClassInstance.willMount(); // pass any props here?
+	        }
+
+	        var entityId = _this._entityClassInstance.entityId;
+
+	        // handle create method
+
+	        if (typeof _this._entityClassInstance.create === 'function') {
+	            _this.stateManager.actions._createEntity(_this._entityClassInstance, entityId);
+	        }
+
+	        var renderContent = typeof _this._entityClassInstance.render === 'function' ? getRenderContent(_this._entityClassInstance) : _this.children;
+
+	        callMethodOnChildren('mount', renderContent, {
+	            parentActions: combinedActions
+	        });
+
+	        // if (this._entityClassInstance.hasOwnProperty('didMount')) {
+	        //     console.log('did mount...');
+	        //     this._entityClassInstance.didMount(); // pass any props here?
+	        // }
+	    };
+
+	    this.update = function () {
+	        if (_this._entityClassInstance.hasOwnProperty('willUpdate')) {
+	            _this._entityClassInstance.willUpdate(); // pass any props here?
+	        }
+
+	        if (_this._entityClassInstance.hasOwnProperty('update')) {
+	            _this._entityClassInstance.update();
+	        }
+
+	        if (_this._entityClassInstance.hasOwnProperty('didUpdate')) {
+	            _this._entityClassInstance.didUpdate();
+	        }
+	    };
+
+	    this.unmount = function () {
+	        if (_this._entityClassInstance.hasOwnProperty('willUnmount')) {
+	            _this._entityClassInstance.willUnmount(); // pass any props here?
+	        }
+
+	        // callMethodOnChildren('unmount', this.children);
+
+	        if (_this._entityClassInstance.hasOwnProperty('didUnmount')) {
+	            _this._entityClassInstance.didUnmount(); // pass any props here?
+	        }
+	    };
+
+	    props = (0, _lodash.isNil)(props) ? {} : props;
+	    children = (0, _lodash.isArray)(children) ? (0, _lodash.flatten)(children) : [];
+
+	    this.entityClass = entityClass;
+	    this.props = props;
+	    this.children = children;
+	    this.systems = props.hasOwnProperty('systems') && Array.isArray(props.systems) ? props.systems : [];
+
+	    // if (entityClass.hasOwnProperty('actions')) {
+	    this.stateManager = new _StateManager2.default();
+
+	    this.stateManager.init(_extends({}, entityClass.actions, internalActions), function () {
+	        return {};
+	    }, // initial state...
+	    function (state, actions, ss) {
+	        return _this.updateState(state);
+	    });
+	    // }
+	};
+
+	exports.default = EntityWrapper;
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _lodash = __webpack_require__(4);
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var _state = Symbol("state");
+	var _actions = Symbol("actions");
+	var _wrappedActions = Symbol("wrappedActions");
+	var _stateSetCallback = Symbol("stateSetCallback");
+	var _hasBeenInitialized = Symbol("hasBeenInitialized");
+
+	var StateManager = function () {
+	    function StateManager() {
+	        var _this = this;
+
+	        _classCallCheck(this, StateManager);
+
+	        this.wrapActions = function (acc, val, name) {
+	            if (typeof val === "function") {
+	                acc[name] = function () {
+	                    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+	                        args[_key] = arguments[_key];
+	                    }
+
+	                    return _this.actionWrapper.apply(_this, [name, val].concat(args));
+	                };
+	            }
+	            return acc;
+	        };
+
+	        this.handleActionReturnTypes = function (newState) {
+	            // if (newState instanceof Promise) {
+	            if (typeof newState.then === 'function') {
+	                newState.then(_this.callSetStateCallback);
+	            }
+
+	            // Detect if newState is actually a generator function.
+	            else if (typeof newState.next === 'function') {
+	                    _this.generatorHandler(newState);
+	                }
+
+	                // newState should be an immutable object.
+	                else {
+	                        _this.callSetStateCallback(newState);
+	                    }
+	        };
+
+	        this.generatorHandler = function (genObject) {
+	            var _genObject$next = genObject.next();
+
+	            var value = _genObject$next.value;
+	            var done = _genObject$next.done;
+
+
+	            value && _this.handleActionReturnTypes(value);
+
+	            if (!done) {
+	                _this.generatorHandler(genObject);
+	            }
+	        };
+
+	        this.callSetStateCallback = function (newState) {
+	            // call the callback specified in the init method.
+	            // NOTE: can do a check to see if state has been changed.
+	            _this[_state] = newState;
+	            _this[_stateSetCallback](_this[_state], _this[_wrappedActions]);
+	        };
+
+	        this._loggingEnabled = true;
+
+	        this.enableLogging = function () {
+	            _this._loggingEnabled = true;
+	            return "stateManager logging is enabled";
+	        };
+
+	        this.disableLogging = function () {
+	            _this._loggingEnabled = false;
+	            return "stateManager logging is disabled";
+	        };
+	    }
+
+	    _createClass(StateManager, [{
+	        key: "init",
+	        value: function init(actions, initFunc, stateSetCallback) {
+	            // attach stateManager to window for debugging
+	            if (window) window.stateManager = this;
+
+	            try {
+	                if (!this[_hasBeenInitialized]) {
+	                    this[_hasBeenInitialized] = true;
+
+	                    /* wrap actions */
+	                    var wrappedActions = (0, _lodash.reduce)(actions, this.wrapActions, {});
+
+	                    this[_wrappedActions] = _extends({}, wrappedActions);
+
+	                    this[_actions] = actions;
+
+	                    /* Set initial state from init function */
+	                    this[_state] = initFunc(this[_wrappedActions]);
+
+	                    /* set state callback, most likely a setState React method */
+	                    this[_stateSetCallback] = stateSetCallback;
+	                } else {
+	                    throw new Error("StateManager has already been initialized");
+	                }
+	            } catch (e) {
+	                console.error(e);
+	            }
+	        }
+	    }, {
+	        key: "actionWrapper",
+
+
+	        /* injects state and actions as args into actions that are called. */
+	        value: function actionWrapper(name, func) {
+	            var _this2 = this;
+
+	            // call the action function with correct args.
+	            if (this._loggingEnabled) {
+	                console.log("action: ", name, this[_state]);
+	            }
+
+	            for (var _len2 = arguments.length, args = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
+	                args[_key2 - 2] = arguments[_key2];
+	            }
+
+	            var newState = func.apply(undefined, [function () {
+	                return _this2[_state];
+	            }, this[_wrappedActions]].concat(args));
+
+	            this.handleActionReturnTypes(newState);
+
+	            return this[_state];
+	        }
+
+	        /* handles standard values, promises (from async functions) and generator function return values */
+
+
+	        /* A recursive function to handle the output of generator functions. */
+
+
+	        /* Calls the setState callback */
+
+
+	        // _loggingEnabled = process.env.NODE_ENV == 'development' ? true : false;
+
+
+	        /* Debugging assist methods */
+
+	    }, {
+	        key: "actions",
+	        get: function get() {
+	            return this[_wrappedActions];
+	        }
+	    }, {
+	        key: "state",
+	        get: function get() {
+	            return this[_state];
+	        }
+
+	        /* wraps actions with... the actionWrapper */
+
+	    }]);
+
+	    return StateManager;
+	}();
+
+	exports.default = StateManager;
 
 /***/ }
 /******/ ])

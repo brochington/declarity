@@ -1,5 +1,7 @@
+import {createRandomString} from './helpers/string';
+
 class Entity {
-    entityId = Math.random()
+    entityId = createRandomString()
 }
 
 export default Entity;

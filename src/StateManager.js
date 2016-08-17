@@ -17,7 +17,7 @@ class StateManager {
 
                 /* wrap actions */
                 const wrappedActions = reduce(actions, this.wrapActions, {});
-                console.log('wrappedActions!', wrappedActions);
+
                 this[_wrappedActions] = {
                     ...wrappedActions
                 };
@@ -45,7 +45,7 @@ class StateManager {
         return this[_wrappedActions];
     }
 
-    get appState() {
+    get state() {
         return this[_state];
     }
 
@@ -61,8 +61,9 @@ class StateManager {
     actionWrapper(name, func, ...args) {
         // call the action function with correct args.
         if (this._loggingEnabled) {
-            console.log("action: ", name);
+            console.log("action: ", name, this[_state]);
         }
+
         const newState = func(() => this[_state], this[_wrappedActions], ...args);
 
         this.handleActionReturnTypes(newState);
@@ -102,10 +103,13 @@ class StateManager {
     /* Calls the setState callback */
     callSetStateCallback = (newState) => {
         // call the callback specified in the init method.
+        // NOTE: can do a check to see if state has been changed.
+        this[_state] = newState;
         this[_stateSetCallback](this[_state], this[_wrappedActions]);
     };
 
-    _loggingEnabled = process.env.NODE_ENV == 'development' ? true : false;
+    // _loggingEnabled = process.env.NODE_ENV == 'development' ? true : false;
+    _loggingEnabled = true;
 
     /* Debugging assist methods */
     enableLogging = () => {
