@@ -1,27 +1,49 @@
+import StateManager from './StateManager';
 import {isNil, isArray, flatten, isEqual, zip} from 'lodash';
 
 const hasMethod = (methodName, instance) => {
     return instance.hasOwnProperty(methodName)
 };
 
-const handleRenderContent = (content) => {
+const handleRenderContent = (content, passedActions) => {
     return content.map(({entityClass, props, children}) => {
         return {
             entityClass,
             props,
             children,
-            entityInstance: new EntityInstance(entityClass, props, children)
+            entityInstance: new EntityInstance(entityClass, props, children, passedActions, false)
         }
     });
 }
 
 class EntityInstance {
-    constructor(entityClass, props, children) {
+    constructor(entityClass, props, children, passedActions, isFirstInTree) {
         this.entityClass = entityClass;
         this.entity = new entityClass();
+        this.isFirstInTree = isFirstInTree;
 
         this.entity.props = props;
         this.entity.children = children;
+
+        if (entityClass.actions) {
+            // Might want to pass isFirstInTree to StateManager.
+            console.time('stateManager');
+            this.stateManager = new StateManager();
+            console.timeEnd('stateManager');
+
+            this.stateManager.init(
+                {...passedActions, ...entityClass.actions},
+                () => {return {};}, // initial state...
+                (state, actions) => this.updateState(state)
+            );
+
+            this.entity.actions = this.stateManager.actions;
+        }
+
+        else {
+            this.entity.actions = passedActions;
+        }
+
     }
 
     // should this be async?
@@ -56,7 +78,7 @@ class EntityInstance {
             const renderContent = this.entity.render();
 
             if (renderContent && renderContent.length && renderContent.length > 0) {
-                this.childEntities = handleRenderContent(renderContent);
+                this.childEntities = handleRenderContent(renderContent, this.stateManager.actions);
 
                 // mount children
                 this.childEntities.map((childEntity) => {
@@ -87,11 +109,16 @@ class EntityInstance {
             const newComponentNames = newContent.map(child => child.name);
 
             if (isEqual(oldComponentNames, newComponentNames)) {
+                // No add/remove of components is needed.
+                // Just update Props.
                 const zippedChildren = zip(this.childEntities, newContent);
 
                 this.childEntities = zippedChildren.map(([oldChild, newChild]) => {
                     const newProps = isNil(newChild.props) ? {} : newChild.props;
                     const newChildren = isArray(newChild.children) ? flatten(newChild.children) : [];
+
+                    oldChild.appState = this.entity.appState;
+                    oldChild.entityInstance.entity.appState = this.entity.appState;
 
                     oldChild.props = newProps;
                     oldChild.entityInstance.props = newProps;
@@ -125,6 +152,16 @@ class EntityInstance {
             this.entity.didUpdate();
         }
 
+    }
+
+    updateState = (newState) => {
+        if (this.isFirstInTree) {
+            this.entity.appState = newState;
+        }
+
+        this.entity.state = newState;
+
+        this.update();
     }
 
     get props() {

@@ -2,7 +2,7 @@ import EntityWrapper from './EntityWrapper';
 
 export const register = ({entityClass, props, children}) => {
 
-    const wrappedEntity = new EntityWrapper(entityClass, props, children);
+    const wrappedEntity = new EntityWrapper(entityClass, props, children, {}, true);
 
     wrappedEntity.mount(props, children);
 
