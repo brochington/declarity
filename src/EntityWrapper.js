@@ -1,138 +1,147 @@
-import StateManager from './StateManager';
-import {isNil, isArray, forEach, flatten} from 'lodash';
+import {isNil, isArray, flatten, isEqual, zip} from 'lodash';
 
-function callMethodOnChildren(methodName, children, ...args) {
-    if (!isArray(children) || children.length <= 0) {
-        return;
-    }
+const hasMethod = (methodName, instance) => {
+    return instance.hasOwnProperty(methodName)
+};
 
-    forEach(children, child => {
-        if (child.hasOwnProperty(methodName) && typeof child[methodName] === 'function') {
-            child[methodName](...args);
+const handleRenderContent = (content) => {
+    return content.map(({entityClass, props, children}) => {
+        return {
+            entityClass,
+            props,
+            children,
+            entityInstance: new EntityInstance(entityClass, props, children)
         }
-    })
+    });
 }
 
-function getRenderContent(entityClassInstance) {
-    const content = entityClassInstance.render();
-
-    if (isNil(content)) return [];
-
-    return isArray(content) ? content : [content];
-}
-
-const internalActions = {
-    // TODO: add support for createFunc as an async/await function
-    _createEntity: (state, actions, entityClass, entityId) => {
-        const created = entityClass.create(state);
-        let newState = state();
-
-        newState[entityId] = created;
-
-        entityClass.didMount && entityClass.didMount();
-
-        return newState;
-    }
-}
-
-class EntityWrapper {
-    constructor(entityClass, props, children){
-        props = isNil(props) ? {} : props;
-        children = isArray(children) ? flatten(children) : [];
-
+class EntityInstance {
+    constructor(entityClass, props, children) {
         this.entityClass = entityClass;
-        this.props = props;
-        this.children = children;
-        this.systems = props.hasOwnProperty('systems') && Array.isArray(props.systems)
-                           ? props.systems
-                           : [];
+        this.entity = new entityClass();
 
-        // if (entityClass.hasOwnProperty('actions')) {
-        this.stateManager = new StateManager();
-
-        this.stateManager.init(
-            {...entityClass.actions, ...internalActions},
-            () => {return {};}, // initial state...
-            (state, actions, ss) => this.updateState(state)
-        );
-        // }
+        this.entity.props = props;
+        this.entity.children = children;
     }
 
-    updateState = (state) => {
-        // console.log('updateStuff, yo', state, this);
-        // console.log(this.stateManager.state[this._entityClassInstance.entityId]);
-        // Does the state manager have state object with the entityId of the entity instance?
-        // if (this.stateManager.state[this._entityClassInstance.entityId]) {
-        //     this._entityClassInstance.actions = this.stateManager.actions;
-        //     this.update();
-        // }
-        // this._entityClassInstance.actions = this.stateManager.actions;
+    // should this be async?
+    mount = (props, children) => {
+        this.entity.props = props;
+        this.entity.children = children;
 
-        this.update();
-    }
-
-    mount = (parentArgs = {}) => {
-        const {parentActions} = parentArgs;
-        const combinedActions = {
-            ...(parentActions ? parentActions : {}),
-            ...(this.stateManager ? this.stateManager.actions : {})
-        };
-
-        this._entityClassInstance = new this.entityClass();
-        this._entityClassInstance.actions = combinedActions;
-
-        if (this._entityClassInstance.hasOwnProperty('willMount')) {
-            this._entityClassInstance.willMount(); // pass any props here?
+        // willMount
+        if (hasMethod('willMount', this.entity)) {
+            this.entity.willMount();
         }
 
-        const {entityId} = this._entityClassInstance;
-
-        // handle create method
-        if (typeof this._entityClassInstance.create === 'function') {
-            this.stateManager.actions._createEntity(this._entityClassInstance, entityId);
+        // didMount
+        if (hasMethod('didMount', this.entity)) {
+            this.entity.didMount();
         }
 
+        // create
+        if (hasMethod('create', this.entity)) {
+            const createdState = this.entity.create();
+            // handle async stuff here.
+        }
 
-        const renderContent = typeof this._entityClassInstance.render === 'function'
-                                  ? getRenderContent(this._entityClassInstance)
-                                  : this.children;
+        // didCreate
+        if (hasMethod('didCreate', this.entity)) {
+            this.entity.didCreate();
+            // handle async stuff here.
+        }
 
+        // mount the children
+        if (hasMethod('render', this.entity)) {
+            const renderContent = this.entity.render();
 
-        callMethodOnChildren('mount', renderContent, {
-            parentActions: combinedActions
-        });
+            if (renderContent && renderContent.length && renderContent.length > 0) {
+                this.childEntities = handleRenderContent(renderContent);
 
-        // if (this._entityClassInstance.hasOwnProperty('didMount')) {
-        //     console.log('did mount...');
-        //     this._entityClassInstance.didMount(); // pass any props here?
-        // }
+                // mount children
+                this.childEntities.map((childEntity) => {
+                    childEntity.entityInstance.mount(childEntity.props, childEntity.children);
+                });
+            }
+
+            // assume that no children have been mounted yet.
+
+        }
+
+        // run willMount stuff
+        // run create() method, which can return a function, promise, generator, etc.
+        // does
+        // Get rendered content.
+
     }
 
     update = () => {
-        if (this._entityClassInstance.hasOwnProperty('willUpdate')) {
-            this._entityClassInstance.willUpdate(); // pass any props here?
+        if (this.childEntities) {
+
+            // get new rendered children.
+            const newContent = this.entity.render();
+
+            // If entityClassNames are same, then we can assume that this level didn't change.
+            // Can add extra checks for props later, or put those in the component.
+            const oldComponentNames = this.childEntities.map(child => child.name);
+            const newComponentNames = newContent.map(child => child.name);
+
+            if (isEqual(oldComponentNames, newComponentNames)) {
+                const zippedChildren = zip(this.childEntities, newContent);
+
+                this.childEntities = zippedChildren.map(([oldChild, newChild]) => {
+                    const newProps = isNil(newChild.props) ? {} : newChild.props;
+                    const newChildren = isArray(newChild.children) ? flatten(newChild.children) : [];
+
+                    oldChild.props = newProps;
+                    oldChild.entityInstance.props = newProps;
+
+                    oldChild.children = newChildren;
+                    oldChild.entityInstance.newChildren;
+                    // console.log('this.far');
+                    oldChild.entityInstance.update();
+
+                    // Might want to call "willUpdate" and such here.
+                    return oldChild;
+                });
+            }
         }
 
-        if (this._entityClassInstance.hasOwnProperty('update')) {
-            this._entityClassInstance.update();
+        // willUpdate
+        if (hasMethod('willUpdate', this.entity)) {
+            this.entity.update();
         }
 
-        if (this._entityClassInstance.hasOwnProperty('didUpdate')) {
-            this._entityClassInstance.didUpdate();
+        // update
+        // The update process might be the "pipeline" that I've been thinking of.
+        if (hasMethod('update', this.entity)) {
+            this.entity.props = this.props;
+            this.entity.children = this.children;
+            this.entity.update();
         }
+
+        // didUpdate
+        if (hasMethod('didUpdate', this.entity)) {
+            this.entity.didUpdate();
+        }
+
     }
 
-    unmount = () => {
-        if (this._entityClassInstance.hasOwnProperty('willUnmount')) {
-            this._entityClassInstance.willUnmount(); // pass any props here?
-        }
+    get props() {
+        return this._props;
+    }
 
-        // callMethodOnChildren('unmount', this.children);
+    set props(props) {
+        this._props = isNil(props) ? {} : props;
+    }
 
-        if (this._entityClassInstance.hasOwnProperty('didUnmount')) {
-            this._entityClassInstance.didUnmount(); // pass any props here?
-        }
+    get children() {
+        return this._children;
+    }
+
+    set children(children) {
+        this._children = isArray(children) ? flatten(children) : [];
     }
 }
 
-export default EntityWrapper;
+export default EntityInstance;

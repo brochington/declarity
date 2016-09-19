@@ -32,14 +32,12 @@ class Engine extends Entity {
     */
     pipeLine() {
         return (
-            <Scene />
+            <Scene systems={[Color, Position]} />
             <Camera>
-                <System1 />
-                <System2 />
+
             </Camera>
             <Light>
-                <System3 someProp={true} />
-            </Light>
+
         );
     }
 }
@@ -48,6 +46,7 @@ class Scene extends Entity {
     actions = {
         // Actions that will be past down to other entities.
     }
+    
     createEntity = () => {
         return {
 
@@ -77,3 +76,7 @@ class Scene extends Entity {
         return ();
     }
 }
+
+
+
+The main hard thing is diffing the components.

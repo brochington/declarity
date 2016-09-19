@@ -90,10 +90,16 @@ class StateManager {
     };
 
     /* A recursive function to handle the output of generator functions. */
-    generatorHandler = (genObject) => {
+    generatorHandler = async (genObject) => {
         const {value, done} = genObject.next();
 
-        value && this.handleActionReturnTypes(value);
+        if (value) {
+            if (typeof value.then === 'function') {
+                await value;
+            }
+
+            this.handleActionReturnTypes(value);
+        }
 
         if (!done) {
             this.generatorHandler(genObject)
