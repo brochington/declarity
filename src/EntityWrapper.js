@@ -27,9 +27,8 @@ class EntityInstance {
 
         if (entityClass.actions) {
             // Might want to pass isFirstInTree to StateManager.
-            console.time('stateManager');
+
             this.stateManager = new StateManager();
-            console.timeEnd('stateManager');
 
             this.stateManager.init(
                 {...passedActions, ...entityClass.actions},

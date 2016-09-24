@@ -72,10 +72,10 @@ class StateManager {
     }
 
     /* handles standard values, promises (from async functions) and generator function return values */
-    handleActionReturnTypes = (newState) => {
-        // if (newState instanceof Promise) {
+    handleActionReturnTypes = async (newState) => {
         if (typeof newState.then === 'function') {
-            newState.then(this.callSetStateCallback);
+            const n = await newState;
+            this.callSetStateCallback(n);
         }
 
         // Detect if newState is actually a generator function.
