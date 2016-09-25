@@ -47,7 +47,7 @@ const internalActions = {
 }
 
 class EntityWrapper {
-    constructor(entityClass, props, children){
+    constructor(entityClass, props, children) {
         props = isNil(props) ? {} : props;
         children = isArray(children) ? flatten(children) : [];
 
@@ -146,7 +146,7 @@ class EntityWrapper {
             this._entityClassInstance.didUpdate();
         }
         // console.log('this', this);
-        if(this._entityClassInstance.hasOwnProperty('render')) {
+        if (this._entityClassInstance.hasOwnProperty('render')) {
             const renderContent = this._entityClassInstance.render();
             console.log('this', this);
             CompareRenderContent(this._oldRenderContent, renderContent);

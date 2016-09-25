@@ -1,19 +1,115 @@
 import StateManager from './StateManager';
-import {isNil, isArray, flatten, isEqual, zip} from 'lodash';
+import {isArray, flatten, isEqual, zip} from 'lodash';
 
-const hasMethod = (methodName, instance) => {
-    return instance.hasOwnProperty(methodName)
-};
+import {map, pipe, isNil, assoc, has, reduce} from 'ramda';
+import {rejectNil} from './helpers/functional';
 
-const handleRenderContent = (content, passedActions) => {
-    return content.map(({entityClass, props, children}) => {
-        return {
-            entityClass,
-            props,
-            children,
-            entityInstance: new EntityInstance(entityClass, props, children, passedActions, false)
+const createEntityInstanceObjects = map(({entityClass, props, children, passedActions}) => {
+    const entityInstance = new EntityInstance(entityClass, props, children, passedActions, false);
+
+    return {
+        entityClass,
+        props,
+        key: props.key,
+        children,
+        entityInstance,
+        entityClassName: entityClass.name
+    }
+});
+
+const handleRenderContent = (content, passedActions) => pipe(
+    rejectNil,
+    map(assoc('passedActions', passedActions)),
+    createEntityInstanceObjects
+)(content);
+
+const _contentByKey = (acc, v) => {
+    acc[v.key] = v;
+    return acc;
+}
+
+const contentByKey = (content) => reduce(_contentByKey, {}, content);
+
+const diffComponents = (oldContent, newContent) => {
+    const newHashMap = contentByKey(newContent);
+    const oldHashMap = contentByKey(oldContent);
+
+    const added = reduce((acc, c) => {
+        if (!has(c.key, oldHashMap)) {
+            acc.push(c)
         }
-    });
+        return acc;
+    }, [], newContent);
+
+    const updated = reduce((acc, c) => {
+        if (has(c.key, newHashMap)) {
+            acc.push([c, newHashMap[c.key]]);
+        }
+        return acc;
+    }, [], oldContent);
+
+    const removed = reduce((acc, c) => {
+        if (!has(c.key, newHashMap)) {
+            acc.push(c);
+        }
+        return acc;
+    }, [], oldContent);
+
+    return {
+        added,
+        updated,
+        removed
+    }
+}
+
+const updateChild = ([oldChild, newChild]) => {
+    console.log('updateChild!!!');
+    const newProps = isNil(newChild.props) ? {} : newChild.props;
+    const newChildren = isArray(newChild.children) ? flatten(newChild.children) : [];
+
+    // oldChild.appState = this.entity.appState;
+    // oldChild.entityInstance.entity.appState = this.entity.appState;
+
+    oldChild.props = newProps;
+    oldChild.entityInstance.props = newProps;
+
+    oldChild.children = newChildren;
+    oldChild.entityInstance.newChildren;
+    // console.log('this.far');
+    oldChild.entityInstance.update();
+
+    // Might want to call "willUpdate" and such here.
+    return oldChild;
+}
+
+const processAddedContent = (addContent, passedActions) => {
+    //need to create entities
+    // console.log('addContent', addContent);
+    const childEntities = handleRenderContent(addContent, passedActions);
+    return childEntities;
+    // console.log('childEntities', childEntities);
+}
+
+const processUpdatedContent = (updatedContent) => {
+    return map(updateChild, updatedContent);
+}
+
+const processRemovedContent = (removedContent) => {
+
+}
+
+const processDiffResults = ({added, updated, removed}) => {
+    processAddedContent(added);
+    processUpdatedContent(updated);
+    processRemovedContent(removed);
+}
+
+const generateChildEntities = (oldContent, newContent, passedActions) => {
+    const {added, updated, removed} = diffComponents(oldContent, newContent);
+
+    const addedEntities = processAddedContent(added, passedActions);
+    const updatedEntities = processUpdatedContent(updated);
+    return addedEntities.concat(updatedEntities)
 }
 
 class EntityInstance {
@@ -51,29 +147,30 @@ class EntityInstance {
         this.entity.children = children;
 
         // willMount
-        if (hasMethod('willMount', this.entity)) {
+        if (has('willMount', this.entity)) {
             this.entity.willMount();
         }
 
         // didMount
-        if (hasMethod('didMount', this.entity)) {
+        if (has('didMount', this.entity)) {
             this.entity.didMount();
         }
 
         // create
-        if (hasMethod('create', this.entity)) {
+        if (has('create', this.entity)) {
             const createdState = this.entity.create();
             // handle async stuff here.
         }
 
         // didCreate
-        if (hasMethod('didCreate', this.entity)) {
+        if (has('didCreate', this.entity)) {
             this.entity.didCreate();
             // handle async stuff here.
         }
 
         // mount the children
-        if (hasMethod('render', this.entity)) {
+        if (has('render', this.entity)) {
+            //TODO: will need to add checks for other values besides <Entity> and null in render array.
             const renderContent = this.entity.render();
 
             if (renderContent && renderContent.length && renderContent.length > 0) {
@@ -96,28 +193,34 @@ class EntityInstance {
 
     }
 
+    _update = (stuff) => {
+        console.log('internal update', stuff);
+    }
+
     update = () => {
         if (this.childEntities) {
 
             // get new rendered children.
-            const newContent = this.entity.render();
-
+            const newContent = rejectNil(this.entity.render());
+            console.log('newContent', newContent);
             // If entityClassNames are same, then we can assume that this level didn't change.
             // Can add extra checks for props later, or put those in the component.
-            const oldComponentNames = this.childEntities.map(child => child.name);
-            const newComponentNames = newContent.map(child => child.name);
+            const oldComponentNames = this.childEntities.map(child => child.entityClass.name);
+            const newComponentNames = newContent.map(child => child.entityClassName);
 
             if (isEqual(oldComponentNames, newComponentNames)) {
                 // No add/remove of components is needed.
                 // Just update Props.
                 const zippedChildren = zip(this.childEntities, newContent);
 
+                this.childEntities = map(updateChild, zippedChildren);
+/*
                 this.childEntities = zippedChildren.map(([oldChild, newChild]) => {
                     const newProps = isNil(newChild.props) ? {} : newChild.props;
                     const newChildren = isArray(newChild.children) ? flatten(newChild.children) : [];
 
-                    oldChild.appState = this.entity.appState;
-                    oldChild.entityInstance.entity.appState = this.entity.appState;
+                    // oldChild.appState = this.entity.appState;
+                    // oldChild.entityInstance.entity.appState = this.entity.appState;
 
                     oldChild.props = newProps;
                     oldChild.entityInstance.props = newProps;
@@ -130,24 +233,35 @@ class EntityInstance {
                     // Might want to call "willUpdate" and such here.
                     return oldChild;
                 });
+*/
+            }
+
+            else {
+                console.log('components are different', newComponentNames);
+                this.childEntities = generateChildEntities(this.childEntities, newContent, this.stateManager.actions);
+
+                // console.log('diffResults', diffResults);
+                // deal with the diff results...
+                // processDiffResults(diffResults);
+                // new childEntities is added with the updated;
             }
         }
 
         // willUpdate
-        if (hasMethod('willUpdate', this.entity)) {
+        if (has('willUpdate', this.entity)) {
             this.entity.update();
         }
 
         // update
         // The update process might be the "pipeline" that I've been thinking of.
-        if (hasMethod('update', this.entity)) {
+        if (has('update', this.entity)) {
             this.entity.props = this.props;
             this.entity.children = this.children;
             this.entity.update();
         }
 
         // didUpdate
-        if (hasMethod('didUpdate', this.entity)) {
+        if (has('didUpdate', this.entity)) {
             this.entity.didUpdate();
         }
 
@@ -161,6 +275,10 @@ class EntityInstance {
         this.entity.state = newState;
 
         this.update();
+    }
+
+    _remove = () => {
+
     }
 
     get props() {

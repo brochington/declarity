@@ -1,13 +1,10 @@
 import EntityWrapper from './EntityWrapper';
 
-export const register = ({entityClass, props, children}) => {
+export const register = ({entityClass, props = {}, children}) => {
+    console.log('register');
+    const newProps = {key: 'parent', ...props};
+    console.log('newProps', newProps);
+    const wrappedEntity = new EntityWrapper(entityClass, newProps, children, {}, true);
 
-    const wrappedEntity = new EntityWrapper(entityClass, props, children, {}, true);
-
-    wrappedEntity.mount(props, children);
-
-    // for testing updating of components.
-    // window.setInterval(() => {
-    //     wrappedEntity.update();
-    // }, 2000);
+    wrappedEntity.mount(newProps, children);
 }
