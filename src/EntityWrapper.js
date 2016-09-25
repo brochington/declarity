@@ -63,7 +63,6 @@ const diffComponents = (oldContent, newContent) => {
 }
 
 const updateChild = ([oldChild, newChild]) => {
-    console.log('updateChild!!!');
     const newProps = isNil(newChild.props) ? {} : newChild.props;
     const newChildren = isArray(newChild.children) ? flatten(newChild.children) : [];
 
@@ -75,40 +74,33 @@ const updateChild = ([oldChild, newChild]) => {
 
     oldChild.children = newChildren;
     oldChild.entityInstance.newChildren;
-    // console.log('this.far');
+
     oldChild.entityInstance.update();
 
-    // Might want to call "willUpdate" and such here.
     return oldChild;
 }
 
+const mountChildren = map((childEntity) => {
+    childEntity.entityInstance.mount(childEntity.props, childEntity.children);
+    return childEntity;
+});
+
 const processAddedContent = (addContent, passedActions) => {
-    //need to create entities
-    // console.log('addContent', addContent);
-    const childEntities = handleRenderContent(addContent, passedActions);
-    return childEntities;
-    // console.log('childEntities', childEntities);
+    const newEntities = handleRenderContent(addContent, passedActions);
+    return mountChildren(newEntities);
 }
 
-const processUpdatedContent = (updatedContent) => {
-    return map(updateChild, updatedContent);
-}
+const processUpdatedContent = map(updateChild);
 
-const processRemovedContent = (removedContent) => {
-
-}
-
-const processDiffResults = ({added, updated, removed}) => {
-    processAddedContent(added);
-    processUpdatedContent(updated);
-    processRemovedContent(removed);
-}
+const processRemovedContent = map(({entityInstance}) => entityInstance._remove())
 
 const generateChildEntities = (oldContent, newContent, passedActions) => {
     const {added, updated, removed} = diffComponents(oldContent, newContent);
 
     const addedEntities = processAddedContent(added, passedActions);
     const updatedEntities = processUpdatedContent(updated);
+    removed.length > 0 && processRemovedContent(removed);
+
     return addedEntities.concat(updatedEntities)
 }
 
@@ -202,7 +194,6 @@ class EntityInstance {
 
             // get new rendered children.
             const newContent = rejectNil(this.entity.render());
-            console.log('newContent', newContent);
             // If entityClassNames are same, then we can assume that this level didn't change.
             // Can add extra checks for props later, or put those in the component.
             const oldComponentNames = this.childEntities.map(child => child.entityClass.name);
@@ -214,36 +205,10 @@ class EntityInstance {
                 const zippedChildren = zip(this.childEntities, newContent);
 
                 this.childEntities = map(updateChild, zippedChildren);
-/*
-                this.childEntities = zippedChildren.map(([oldChild, newChild]) => {
-                    const newProps = isNil(newChild.props) ? {} : newChild.props;
-                    const newChildren = isArray(newChild.children) ? flatten(newChild.children) : [];
-
-                    // oldChild.appState = this.entity.appState;
-                    // oldChild.entityInstance.entity.appState = this.entity.appState;
-
-                    oldChild.props = newProps;
-                    oldChild.entityInstance.props = newProps;
-
-                    oldChild.children = newChildren;
-                    oldChild.entityInstance.newChildren;
-                    // console.log('this.far');
-                    oldChild.entityInstance.update();
-
-                    // Might want to call "willUpdate" and such here.
-                    return oldChild;
-                });
-*/
             }
 
             else {
-                console.log('components are different', newComponentNames);
                 this.childEntities = generateChildEntities(this.childEntities, newContent, this.stateManager.actions);
-
-                // console.log('diffResults', diffResults);
-                // deal with the diff results...
-                // processDiffResults(diffResults);
-                // new childEntities is added with the updated;
             }
         }
 
@@ -278,7 +243,10 @@ class EntityInstance {
     }
 
     _remove = () => {
-
+        // Figure out if anything needs to happen here.
+        if (has('willUnmount', this.entity)) {
+            this.entity.willUnmount();
+        }
     }
 
     get props() {

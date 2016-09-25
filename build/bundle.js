@@ -17330,7 +17330,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var oldChild = _ref3[0];
 	    var newChild = _ref3[1];
 	
-	    console.log('updateChild!!!');
 	    var newProps = (0, _ramda.isNil)(newChild.props) ? {} : newChild.props;
 	    var newChildren = (0, _lodash.isArray)(newChild.children) ? (0, _lodash.flatten)(newChild.children) : [];
 	
@@ -17342,36 +17341,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    oldChild.children = newChildren;
 	    oldChild.entityInstance.newChildren;
-	    // console.log('this.far');
+	
 	    oldChild.entityInstance.update();
 	
-	    // Might want to call "willUpdate" and such here.
 	    return oldChild;
 	};
 	
+	var mountChildren = (0, _ramda.map)(function (childEntity) {
+	    childEntity.entityInstance.mount(childEntity.props, childEntity.children);
+	    return childEntity;
+	});
+	
 	var processAddedContent = function processAddedContent(addContent, passedActions) {
-	    //need to create entities
-	    // console.log('addContent', addContent);
-	    var childEntities = handleRenderContent(addContent, passedActions);
-	    return childEntities;
-	    // console.log('childEntities', childEntities);
+	    var newEntities = handleRenderContent(addContent, passedActions);
+	    return mountChildren(newEntities);
 	};
 	
-	var processUpdatedContent = function processUpdatedContent(updatedContent) {
-	    return (0, _ramda.map)(updateChild, updatedContent);
-	};
+	var processUpdatedContent = (0, _ramda.map)(updateChild);
 	
-	var processRemovedContent = function processRemovedContent(removedContent) {};
-	
-	var processDiffResults = function processDiffResults(_ref4) {
-	    var added = _ref4.added;
-	    var updated = _ref4.updated;
-	    var removed = _ref4.removed;
-	
-	    processAddedContent(added);
-	    processUpdatedContent(updated);
-	    processRemovedContent(removed);
-	};
+	var processRemovedContent = (0, _ramda.map)(function (_ref4) {
+	    var entityInstance = _ref4.entityInstance;
+	    return entityInstance._remove();
+	});
 	
 	var generateChildEntities = function generateChildEntities(oldContent, newContent, passedActions) {
 	    var _diffComponents = diffComponents(oldContent, newContent);
@@ -17383,6 +17374,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    var addedEntities = processAddedContent(added, passedActions);
 	    var updatedEntities = processUpdatedContent(updated);
+	    removed.length > 0 && processRemovedContent(removed);
+	
 	    return addedEntities.concat(updatedEntities);
 	};
 	
@@ -17503,7 +17496,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            // get new rendered children.
 	            var newContent = (0, _functional.rejectNil)(_this2.entity.render());
-	            console.log('newContent', newContent);
 	            // If entityClassNames are same, then we can assume that this level didn't change.
 	            // Can add extra checks for props later, or put those in the component.
 	            var oldComponentNames = _this2.childEntities.map(function (child) {
@@ -17519,34 +17511,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var zippedChildren = (0, _lodash.zip)(_this2.childEntities, newContent);
 	
 	                _this2.childEntities = (0, _ramda.map)(updateChild, zippedChildren);
-	                /*
-	                                this.childEntities = zippedChildren.map(([oldChild, newChild]) => {
-	                                    const newProps = isNil(newChild.props) ? {} : newChild.props;
-	                                    const newChildren = isArray(newChild.children) ? flatten(newChild.children) : [];
-	                
-	                                    // oldChild.appState = this.entity.appState;
-	                                    // oldChild.entityInstance.entity.appState = this.entity.appState;
-	                
-	                                    oldChild.props = newProps;
-	                                    oldChild.entityInstance.props = newProps;
-	                
-	                                    oldChild.children = newChildren;
-	                                    oldChild.entityInstance.newChildren;
-	                                    // console.log('this.far');
-	                                    oldChild.entityInstance.update();
-	                
-	                                    // Might want to call "willUpdate" and such here.
-	                                    return oldChild;
-	                                });
-	                */
 	            } else {
-	                console.log('components are different', newComponentNames);
 	                _this2.childEntities = generateChildEntities(_this2.childEntities, newContent, _this2.stateManager.actions);
-	
-	                // console.log('diffResults', diffResults);
-	                // deal with the diff results...
-	                // processDiffResults(diffResults);
-	                // new childEntities is added with the updated;
 	            }
 	        }
 	
@@ -17579,7 +17545,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _this2.update();
 	    };
 	
-	    this._remove = function () {};
+	    this._remove = function () {
+	        // Figure out if anything needs to happen here.
+	        if ((0, _ramda.has)('willUnmount', _this2.entity)) {
+	            _this2.entity.willUnmount();
+	        }
+	    };
 	};
 	
 	exports.default = EntityInstance;
