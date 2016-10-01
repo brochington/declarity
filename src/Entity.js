@@ -9,7 +9,6 @@ class Entity {
     }
 
     set props(props) {
-        // console.log('1');
         this._props = isNil(props) ? {} : props;
     }
 

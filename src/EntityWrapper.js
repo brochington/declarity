@@ -104,8 +104,19 @@ const generateChildEntities = (oldContent, newContent, passedActions) => {
     return addedEntities.concat(updatedEntities)
 }
 
+const getRenderContent = (entity, params) => {
+    const content = entity.render(params);
+    const contentArray = isArray(content)
+                            ? content
+                            : has('key', content)
+                                ? [content]
+                                : [];
+
+    return rejectNil(contentArray);
+}
+
 class EntityInstance {
-    constructor(entityClass, props, children, passedActions, isFirstInTree) {
+    constructor(entityClass, props, children, passedActions = {}, isFirstInTree) {
         this.entityClass = entityClass;
         this.entity = new entityClass();
         this.isFirstInTree = isFirstInTree;
@@ -113,24 +124,19 @@ class EntityInstance {
         this.entity.props = props;
         this.entity.children = children;
 
-        if (entityClass.actions) {
-            // Might want to pass isFirstInTree to StateManager.
+        const entityClassActions = entityClass.actions || {};
 
-            this.stateManager = new StateManager();
+        // Might want to pass isFirstInTree to StateManager.
+        this.stateManager = new StateManager();
 
-            this.stateManager.init(
-                {...passedActions, ...entityClass.actions},
-                () => {return {};}, // initial state...
-                (state, actions) => this.updateState(state)
-            );
+        this.stateManager.init(
+            {...passedActions, ...entityClassActions},
+            {create: this.createState},
+            () => {return {};}, // initial state...
+            (state, actions) => this.updateState(state)
+        );
 
-            this.entity.actions = this.stateManager.actions;
-        }
-
-        else {
-            this.entity.actions = passedActions;
-        }
-
+        this.actions = this.stateManager.actions;
     }
 
     // should this be async?
@@ -138,51 +144,66 @@ class EntityInstance {
         this.entity.props = props;
         this.entity.children = children;
 
-        // willMount
-        if (has('willMount', this.entity)) {
-            this.entity.willMount();
+        this.props = props;
+        this.children = children;
+
+        const passedParams = {
+            actions: this.actions,
+            props,
+            children
         }
 
-        // didMount
-        if (has('didMount', this.entity)) {
-            this.entity.didMount();
+        // willMount
+        if (has('willMount', this.entity)) {
+            this.entity.willMount(passedParams);
         }
+
 
         // create
         if (has('create', this.entity)) {
-            const createdState = this.entity.create();
-            // handle async stuff here.
+            this.stateManager.privateActions.create(passedParams, this);
+        }
+
+        else {
+            this.afterStateCreated();
+        }
+    }
+
+    afterStateCreated = (state) => {
+        this.shouldUpdate = true;
+
+        const passedParamsWithState = {
+            props: this.props,
+            children: this.children,
+            actions: this.actions,
+            state
         }
 
         // didCreate
         if (has('didCreate', this.entity)) {
-            this.entity.didCreate();
+            this.entity.didCreate(passedParamsWithState);
             // handle async stuff here.
         }
 
         // mount the children
         if (has('render', this.entity)) {
             //TODO: will need to add checks for other values besides <Entity> and null in render array.
-            const renderContent = this.entity.render();
+            const renderContent = getRenderContent(this.entity, passedParamsWithState);
 
             if (renderContent && renderContent.length && renderContent.length > 0) {
-                this.childEntities = handleRenderContent(renderContent, this.stateManager.actions);
+                this.childEntities = handleRenderContent(renderContent, this.entity.actions);
 
                 // mount children
                 this.childEntities.map((childEntity) => {
                     childEntity.entityInstance.mount(childEntity.props, childEntity.children);
                 });
             }
-
-            // assume that no children have been mounted yet.
-
         }
 
-        // run willMount stuff
-        // run create() method, which can return a function, promise, generator, etc.
-        // does
-        // Get rendered content.
-
+        // didMount
+        if (has('didMount', this.entity)) {
+            this.entity.didMount(passedParamsWithState);
+        }
     }
 
     _update = (stuff) => {
@@ -190,10 +211,28 @@ class EntityInstance {
     }
 
     update = () => {
+        const nextParams = {
+            nextProps: {...this.props},
+            nextChildren: this.children,
+            actions: this.actions,
+            state: this.stateManager.state
+        };
+
         if (this.childEntities) {
 
+
+            // willUpdate
+            if (has('willUpdate', this.entity)) {
+                this.entity.willUpdate(nextParams);
+            }
+
             // get new rendered children.
-            const newContent = rejectNil(this.entity.render());
+            const newContent = getRenderContent(this.entity, {
+                props: {...this.props},
+                children: this.children,
+                actions: this.actions,
+                state: this.stateManager.state
+            });
             // If entityClassNames are same, then we can assume that this level didn't change.
             // Can add extra checks for props later, or put those in the component.
             const oldComponentNames = this.childEntities.map(child => child.entityClass.name);
@@ -208,26 +247,29 @@ class EntityInstance {
             }
 
             else {
-                this.childEntities = generateChildEntities(this.childEntities, newContent, this.stateManager.actions);
+                this.childEntities = generateChildEntities(this.childEntities, newContent, this.entity.actions);
             }
         }
 
-        // willUpdate
-        if (has('willUpdate', this.entity)) {
-            this.entity.update();
+        const prevParams = {
+            prevProps : {...this.entity.props},
+            prevChildren: this.entity.children,
+            actions: this.actions
         }
+
 
         // update
         // The update process might be the "pipeline" that I've been thinking of.
         if (has('update', this.entity)) {
+            this.entity.update(nextParams);
+
             this.entity.props = this.props;
             this.entity.children = this.children;
-            this.entity.update();
         }
 
         // didUpdate
         if (has('didUpdate', this.entity)) {
-            this.entity.didUpdate();
+            this.entity.didUpdate(prevParams);
         }
 
     }
@@ -239,7 +281,9 @@ class EntityInstance {
 
         this.entity.state = newState;
 
-        this.update();
+        if (this.shouldUpdate) {
+            this.update();
+        }
     }
 
     _remove = () => {
@@ -247,6 +291,16 @@ class EntityInstance {
         if (has('willUnmount', this.entity)) {
             this.entity.willUnmount();
         }
+    }
+
+    createState = async (state, actions, passedParams, ctx) => {
+        ctx.shouldUpdate = false;
+
+        const newState = await ctx.entity.create(passedParams);
+
+        ctx.afterStateCreated(newState);
+
+        return newState;
     }
 
     get props() {
@@ -263,6 +317,10 @@ class EntityInstance {
 
     set children(children) {
         this._children = isArray(children) ? flatten(children) : [];
+    }
+
+    get state() {
+        return this._createdState;
     }
 }
 

@@ -2,12 +2,14 @@ import {reduce} from 'lodash';
 
 const _state = Symbol("state");
 const _actions = Symbol("actions");
+const _privateActions = Symbol('privateActions');
 const _wrappedActions = Symbol("wrappedActions");
+const _wrappedPrivateActions = Symbol('wrappedPrivateActions');
 const _stateSetCallback = Symbol("stateSetCallback");
 const _hasBeenInitialized = Symbol("hasBeenInitialized");
 
 class StateManager {
-    init(actions, initFunc, stateSetCallback) {
+    init(actions, privateActions, initFunc, stateSetCallback) {
         // attach stateManager to window for debugging
         if (window) window.stateManager = this;
 
@@ -17,12 +19,23 @@ class StateManager {
 
                 /* wrap actions */
                 const wrappedActions = reduce(actions, this.wrapActions, {});
+                const wrappedPrivateActions = reduce(privateActions, this.wrapActions, {});
 
                 this[_wrappedActions] = {
                     ...wrappedActions
                 };
 
+                this[_wrappedPrivateActions] = {
+                    ...wrappedPrivateActions
+                }
+
+                const allActions = {
+                    ...wrappedActions,
+                    ...wrappedPrivateActions
+                }
+
                 this[_actions] = actions;
+                this[_privateActions] = privateActions;
 
                 /* Set initial state from init function */
                 this[_state] = initFunc(this[_wrappedActions]);
@@ -43,6 +56,10 @@ class StateManager {
 
     get actions() {
         return this[_wrappedActions];
+    }
+
+    get privateActions() {
+        return this[_wrappedPrivateActions];
     }
 
     get state() {
