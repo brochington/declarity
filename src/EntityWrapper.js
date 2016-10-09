@@ -2,7 +2,8 @@ import StateManager from './StateManager';
 import {isArray, flatten, isEqual, zip} from 'lodash';
 
 import {map, pipe, isNil, assoc, has, reduce} from 'ramda';
-import {rejectNil} from './helpers/functional';
+import {rejectNil, contentByKey} from './helpers/functional';
+import {sync} from './helpers/async';
 
 const createEntityInstanceObjects = map(({entityClass, props, children, passedActions}) => {
     const entityInstance = new EntityInstance(entityClass, props, children, passedActions, false);
@@ -22,13 +23,6 @@ const handleRenderContent = (content, passedActions) => pipe(
     map(assoc('passedActions', passedActions)),
     createEntityInstanceObjects
 )(content);
-
-const _contentByKey = (acc, v) => {
-    acc[v.key] = v;
-    return acc;
-}
-
-const contentByKey = (content) => reduce(_contentByKey, {}, content);
 
 const diffComponents = (oldContent, newContent) => {
     const newHashMap = contentByKey(newContent);
@@ -130,7 +124,6 @@ class EntityInstance {
 
         this.stateManager.init(
             {...passedActions, ...entityClassActions},
-            {create: this.createState},
             () => {return {};}, // initial state...
             (state, actions) => this.updateState(state)
         );
@@ -139,7 +132,7 @@ class EntityInstance {
     }
 
     // should this be async?
-    mount = (props, children) => {
+    mount = async (props, children) => {
         this.entity.props = props;
         this.entity.children = children;
 
@@ -157,18 +150,16 @@ class EntityInstance {
             this.entity.willMount(passedParams);
         }
 
-
         // create
         if (has('create', this.entity)) {
-            this.stateManager.getPrivateActions().create(passedParams, this);
+            const initState = await this.entity.create(passedParams);
+            this.stateManager.setState(initState);
         }
 
-        else {
-            this.afterStateCreated();
-        }
+        await this.afterStateCreated(this.stateManager.getState());
     }
 
-    afterStateCreated = (state) => {
+    afterStateCreated = async (state) => {
         this.shouldUpdate = true;
 
         const passedParamsWithState = {
@@ -205,10 +196,6 @@ class EntityInstance {
         }
     }
 
-    _update = (stuff: any) => {
-        console.log('internal update', stuff);
-    }
-
     update = () => {
         const nextParams = {
             nextProps: {...this.props},
@@ -218,8 +205,6 @@ class EntityInstance {
         };
 
         if (this.childEntities) {
-
-
             // willUpdate
             if (has('willUpdate', this.entity)) {
                 this.entity.willUpdate(nextParams);
@@ -289,16 +274,6 @@ class EntityInstance {
         if (has('willUnmount', this.entity)) {
             this.entity.willUnmount();
         }
-    }
-
-    createState = async (state, actions, passedParams, ctx): Object => {
-        ctx.shouldUpdate = false;
-
-        const newState = await ctx.entity.create(passedParams);
-
-        ctx.afterStateCreated(newState);
-
-        return newState;
     }
 
     get props(): Object {

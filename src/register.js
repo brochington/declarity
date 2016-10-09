@@ -1,13 +1,13 @@
 /* @flow */
 import EntityWrapper from './EntityWrapper';
 
-export const register = (configObj: Object) => {
+export const register = (configObj: {entityClass: any, children: any, props: ?Object}): void => {
     const {entityClass, children} = configObj;
     const props = configObj || {};
     // console.log('yo', entityClass, props, children);
-    const newProps = {key: 'parent', ...props};
+    const newProps: Object = {key: 'parent', ...props};
 
-    const wrappedEntity = new EntityWrapper(entityClass, newProps, children, {}, true);
+    const wrappedEntity: EntityWrapper = new EntityWrapper(entityClass, newProps, children, {}, true);
 
     wrappedEntity.mount(newProps, children);
 }

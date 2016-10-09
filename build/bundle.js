@@ -17265,6 +17265,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _functional = __webpack_require__(114);
 	
+	var _async = __webpack_require__(121);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var createEntityInstanceObjects = (0, _ramda.map)(function (_ref) {
@@ -17289,18 +17291,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return (0, _ramda.pipe)(_functional.rejectNil, (0, _ramda.map)((0, _ramda.assoc)('passedActions', passedActions)), createEntityInstanceObjects)(content);
 	};
 	
-	var _contentByKey = function _contentByKey(acc, v) {
-	    acc[v.key] = v;
-	    return acc;
-	};
-	
-	var contentByKey = function contentByKey(content) {
-	    return (0, _ramda.reduce)(_contentByKey, {}, content);
-	};
-	
 	var diffComponents = function diffComponents(oldContent, newContent) {
-	    var newHashMap = contentByKey(newContent);
-	    var oldHashMap = contentByKey(oldContent);
+	    var newHashMap = (0, _functional.contentByKey)(newContent);
+	    var oldHashMap = (0, _functional.contentByKey)(oldContent);
 	
 	    var added = (0, _ramda.reduce)(function (acc, c) {
 	        if (!(0, _ramda.has)(c.key, oldHashMap)) {
@@ -17413,7 +17406,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // Might want to pass isFirstInTree to StateManager.
 	        this.stateManager = new _StateManager2.default();
 	
-	        this.stateManager.init((0, _extends3.default)({}, passedActions, entityClassActions), { create: this.createState }, function () {
+	        this.stateManager.init((0, _extends3.default)({}, passedActions, entityClassActions), function () {
 	            return {};
 	        }, // initial state...
 	        function (state, actions) {
@@ -17454,72 +17447,119 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _initialiseProps = function _initialiseProps() {
 	    var _this2 = this;
 	
-	    this.mount = function (props, children) {
-	        _this2.entity.props = props;
-	        _this2.entity.children = children;
+	    this.mount = function () {
+	        var _ref5 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(props, children) {
+	            var passedParams, initState;
+	            return _regenerator2.default.wrap(function _callee$(_context) {
+	                while (1) {
+	                    switch (_context.prev = _context.next) {
+	                        case 0:
+	                            _this2.entity.props = props;
+	                            _this2.entity.children = children;
 	
-	        _this2.props = props;
-	        _this2.children = children;
+	                            _this2.props = props;
+	                            _this2.children = children;
 	
-	        var passedParams = {
-	            actions: _this2.actions,
-	            props: props,
-	            children: children
+	                            passedParams = {
+	                                actions: _this2.actions,
+	                                props: props,
+	                                children: children
+	                            };
+	
+	                            // willMount
+	
+	                            if ((0, _ramda.has)('willMount', _this2.entity)) {
+	                                _this2.entity.willMount(passedParams);
+	                            }
+	
+	                            // create
+	
+	                            if (!(0, _ramda.has)('create', _this2.entity)) {
+	                                _context.next = 11;
+	                                break;
+	                            }
+	
+	                            _context.next = 9;
+	                            return _this2.entity.create(passedParams);
+	
+	                        case 9:
+	                            initState = _context.sent;
+	
+	                            _this2.stateManager.setState(initState);
+	
+	                        case 11:
+	                            _context.next = 13;
+	                            return _this2.afterStateCreated(_this2.stateManager.getState());
+	
+	                        case 13:
+	                        case 'end':
+	                            return _context.stop();
+	                    }
+	                }
+	            }, _callee, _this2);
+	        }));
+	
+	        return function (_x2, _x3) {
+	            return _ref5.apply(this, arguments);
 	        };
+	    }();
 	
-	        // willMount
-	        if ((0, _ramda.has)('willMount', _this2.entity)) {
-	            _this2.entity.willMount(passedParams);
-	        }
+	    this.afterStateCreated = function () {
+	        var _ref6 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2(state) {
+	            var passedParamsWithState, renderContent;
+	            return _regenerator2.default.wrap(function _callee2$(_context2) {
+	                while (1) {
+	                    switch (_context2.prev = _context2.next) {
+	                        case 0:
+	                            _this2.shouldUpdate = true;
 	
-	        // create
-	        if ((0, _ramda.has)('create', _this2.entity)) {
-	            _this2.stateManager.getPrivateActions().create(passedParams, _this2);
-	        } else {
-	            _this2.afterStateCreated();
-	        }
-	    };
+	                            passedParamsWithState = {
+	                                props: _this2.props,
+	                                children: _this2.children,
+	                                actions: _this2.actions,
+	                                state: state
+	                            };
 	
-	    this.afterStateCreated = function (state) {
-	        _this2.shouldUpdate = true;
+	                            // didCreate
 	
-	        var passedParamsWithState = {
-	            props: _this2.props,
-	            children: _this2.children,
-	            actions: _this2.actions,
-	            state: state
+	                            if ((0, _ramda.has)('didCreate', _this2.entity)) {
+	                                _this2.entity.didCreate(passedParamsWithState);
+	                                // handle async stuff here.
+	                            }
+	
+	                            // mount the children
+	                            if ((0, _ramda.has)('render', _this2.entity)) {
+	                                //TODO: will need to add checks for other values besides <Entity> and null in render array.
+	                                renderContent = getRenderContent(_this2.entity, passedParamsWithState);
+	
+	
+	                                if (renderContent && renderContent.length && renderContent.length > 0) {
+	                                    _this2.childEntities = handleRenderContent(renderContent, _this2.entity.actions);
+	
+	                                    // mount children
+	                                    _this2.childEntities.map(function (childEntity) {
+	                                        childEntity.entityInstance.mount(childEntity.props, childEntity.children);
+	                                    });
+	                                }
+	                            }
+	
+	                            // didMount
+	                            if ((0, _ramda.has)('didMount', _this2.entity)) {
+	                                _this2.entity.didMount(passedParamsWithState);
+	                            }
+	
+	                        case 5:
+	                        case 'end':
+	                            return _context2.stop();
+	                    }
+	                }
+	            }, _callee2, _this2);
+	        }));
+	
+	        return function (_x4) {
+	            return _ref6.apply(this, arguments);
 	        };
-	
-	        // didCreate
-	        if ((0, _ramda.has)('didCreate', _this2.entity)) {
-	            _this2.entity.didCreate(passedParamsWithState);
-	            // handle async stuff here.
-	        }
-	
-	        // mount the children
-	        if ((0, _ramda.has)('render', _this2.entity)) {
-	            //TODO: will need to add checks for other values besides <Entity> and null in render array.
-	            var renderContent = getRenderContent(_this2.entity, passedParamsWithState);
-	
-	            if (renderContent && renderContent.length && renderContent.length > 0) {
-	                _this2.childEntities = handleRenderContent(renderContent, _this2.entity.actions);
-	
-	                // mount children
-	                _this2.childEntities.map(function (childEntity) {
-	                    childEntity.entityInstance.mount(childEntity.props, childEntity.children);
-	                });
-	            }
-	        }
-	
-	        // didMount
-	        if ((0, _ramda.has)('didMount', _this2.entity)) {
-	            _this2.entity.didMount(passedParamsWithState);
-	        }
-	    };
-	
-	    this._update = function (stuff) {
-	        console.log('internal update', stuff);
-	    };
+	    }();
 	
 	    this.update = function () {
 	        var nextParams = {
@@ -17530,7 +17570,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	
 	        if (_this2.childEntities) {
-	
 	            // willUpdate
 	            if ((0, _ramda.has)('willUpdate', _this2.entity)) {
 	                _this2.entity.willUpdate(nextParams);
@@ -17602,39 +17641,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            _this2.entity.willUnmount();
 	        }
 	    };
-	
-	    this.createState = function () {
-	        var _ref5 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(state, actions, passedParams, ctx) {
-	            var newState;
-	            return _regenerator2.default.wrap(function _callee$(_context) {
-	                while (1) {
-	                    switch (_context.prev = _context.next) {
-	                        case 0:
-	                            ctx.shouldUpdate = false;
-	
-	                            _context.next = 3;
-	                            return ctx.entity.create(passedParams);
-	
-	                        case 3:
-	                            newState = _context.sent;
-	
-	
-	                            ctx.afterStateCreated(newState);
-	
-	                            return _context.abrupt('return', newState);
-	
-	                        case 6:
-	                        case 'end':
-	                            return _context.stop();
-	                    }
-	                }
-	            }, _callee, _this2);
-	        }));
-	
-	        return function (_x2, _x3, _x4, _x5) {
-	            return _ref5.apply(this, arguments);
-	        };
-	    }();
 	};
 	
 	exports.default = EntityInstance;
@@ -19886,7 +19892,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    (0, _createClass3.default)(StateManager, [{
 	        key: "init",
-	        value: function init(actions, privateActions, initFunc, stateSetCallback) {
+	        value: function init(actions, initFunc, stateSetCallback) {
 	            // attach stateManager to window for debugging
 	            if (window) window.stateManager = this;
 	
@@ -19896,16 +19902,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                    /* wrap actions */
 	                    var wrappedActions = (0, _lodash.reduce)(actions, this.wrapActions, {});
-	                    var wrappedPrivateActions = (0, _lodash.reduce)(privateActions, this.wrapActions, {});
 	
 	                    this._wrappedActions = (0, _extends3.default)({}, wrappedActions);
 	
-	                    this._wrappedPrivateActions = (0, _extends3.default)({}, wrappedPrivateActions);
-	
-	                    var allActions = (0, _extends3.default)({}, wrappedActions, wrappedPrivateActions);
+	                    var allActions = (0, _extends3.default)({}, wrappedActions);
 	
 	                    this._actions = actions;
-	                    this._privateActions = privateActions;
 	
 	                    /* Set initial state from init function */
 	                    this._state = initFunc(this._wrappedActions);
@@ -19933,6 +19935,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        key: "getState",
 	        value: function getState() {
 	            return this._state;
+	        }
+	
+	        // NOTE: This should never be exposed to the end user.
+	
+	    }, {
+	        key: "setState",
+	        value: function setState(newState) {
+	            this._state = newState;
 	        }
 	
 	        /* wraps actions with... the actionWrapper */
@@ -28842,11 +28852,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	exports.rejectNil = undefined;
+	exports.contentByKey = exports.rejectNil = undefined;
 	
 	var _ramda = __webpack_require__(113);
 	
 	var rejectNil = exports.rejectNil = (0, _ramda.reject)(_ramda.isNil);
+	
+	var _contentByKey = function _contentByKey(acc, v) {
+	    acc[v.key] = v;
+	    return acc;
+	};
+	
+	// Takes an array and creates a map indexed with the key property value in each entry in array.
+	// [{key: a}] -> {a: {key: a}}
+	var contentByKey = exports.contentByKey = function contentByKey(content) {
+	    return (0, _ramda.reduce)(_contentByKey, {}, content);
+	};
 
 /***/ },
 /* 115 */
@@ -28977,6 +28998,128 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if(index in object)$defineProperty.f(object, index, createDesc(0, value));
 	  else object[index] = value;
 	};
+
+/***/ },
+/* 121 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.sync = exports.generatorHandler = undefined;
+	
+	var _regenerator = __webpack_require__(51);
+	
+	var _regenerator2 = _interopRequireDefault(_regenerator);
+	
+	var _asyncToGenerator2 = __webpack_require__(55);
+	
+	var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
+	
+	/* A recursive function to handle the output of generator functions. */
+	
+	var generatorHandler = exports.generatorHandler = function () {
+	    var _ref = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(genObject) {
+	        var _genObject$next, value, done;
+	
+	        return _regenerator2.default.wrap(function _callee$(_context) {
+	            while (1) {
+	                switch (_context.prev = _context.next) {
+	                    case 0:
+	                        _genObject$next = genObject.next();
+	                        value = _genObject$next.value;
+	                        done = _genObject$next.done;
+	
+	                        if (!value) {
+	                            _context.next = 7;
+	                            break;
+	                        }
+	
+	                        if (!(typeof value.then === 'function')) {
+	                            _context.next = 7;
+	                            break;
+	                        }
+	
+	                        _context.next = 7;
+	                        return value;
+	
+	                    case 7:
+	                        return _context.abrupt('return', done ? sync(value) : generatorHandler(genObject));
+	
+	                    case 8:
+	                    case 'end':
+	                        return _context.stop();
+	                }
+	            }
+	        }, _callee, this);
+	    }));
+	
+	    return function generatorHandler(_x) {
+	        return _ref.apply(this, arguments);
+	    };
+	}();
+	
+	var sync = exports.sync = function () {
+	    var _ref2 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2(value) {
+	        var newValue, _newValue;
+	
+	        return _regenerator2.default.wrap(function _callee2$(_context2) {
+	            while (1) {
+	                switch (_context2.prev = _context2.next) {
+	                    case 0:
+	                        console.log('yo');
+	
+	                        if (!(typeof value.then === 'function')) {
+	                            _context2.next = 9;
+	                            break;
+	                        }
+	
+	                        console.log('a');
+	                        _context2.next = 5;
+	                        return value;
+	
+	                    case 5:
+	                        newValue = _context2.sent;
+	                        return _context2.abrupt('return', sync(newValue));
+	
+	                    case 9:
+	                        if (!(typeof value.next === 'function')) {
+	                            _context2.next = 17;
+	                            break;
+	                        }
+	
+	                        console.log('b');
+	                        _context2.next = 13;
+	                        return generatorHandler(value);
+	
+	                    case 13:
+	                        _newValue = _context2.sent;
+	                        return _context2.abrupt('return', _newValue);
+	
+	                    case 17:
+	                        console.log('c');
+	                        return _context2.abrupt('return', value);
+	
+	                    case 19:
+	                    case 'end':
+	                        return _context2.stop();
+	                }
+	            }
+	        }, _callee2, this);
+	    }));
+	
+	    return function sync(_x2) {
+	        return _ref2.apply(this, arguments);
+	    };
+	}();
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	;
+	
+	;
 
 /***/ }
 /******/ ])

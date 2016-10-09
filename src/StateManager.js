@@ -1,6 +1,8 @@
 // @flow
 import {reduce} from 'lodash';
 
+declare var window: Object
+
 class StateManager {
     _hasBeenInitialized: boolean
     _actions: Object
@@ -10,7 +12,7 @@ class StateManager {
     _state: any
     _stateSetCallback: Function
 
-    init(actions: Object, privateActions: Object, initFunc: Function, stateSetCallback: Function) {
+    init(actions: Object, initFunc: (o: Object) => Object, stateSetCallback: Function) {
         // attach stateManager to window for debugging
         if (window) window.stateManager = this;
 
@@ -19,24 +21,17 @@ class StateManager {
                 this._hasBeenInitialized = true;
 
                 /* wrap actions */
-                const wrappedActions = reduce(actions, this.wrapActions, {});
-                const wrappedPrivateActions = reduce(privateActions, this.wrapActions, {});
+                const wrappedActions: Object = reduce(actions, this.wrapActions, {});
 
                 this._wrappedActions = {
                     ...wrappedActions
                 };
 
-                this._wrappedPrivateActions = {
-                    ...wrappedPrivateActions
-                }
-
                 const allActions = {
-                    ...wrappedActions,
-                    ...wrappedPrivateActions
+                    ...wrappedActions
                 }
 
                 this._actions = actions;
-                this._privateActions = privateActions;
 
                 /* Set initial state from init function */
                 this._state = initFunc(this._wrappedActions);
@@ -67,8 +62,13 @@ class StateManager {
         return this._state;
     }
 
+    // NOTE: This should never be exposed to the end user.
+    setState(newState: any) {
+        this._state = newState;
+    }
+
     /* wraps actions with... the actionWrapper */
-    wrapActions = (acc: any, val: any, name: string) => {
+    wrapActions = (acc: Object, val: any, name: string) => {
         if (typeof val === "function") {
             acc[name] = (...args) => this.actionWrapper(name, val, ...args);
         }
