@@ -1,31 +1,32 @@
+// @flow
 import {reduce} from 'lodash';
 
-const _state = Symbol("state");
-const _actions = Symbol("actions");
-const _privateActions = Symbol('privateActions');
-const _wrappedActions = Symbol("wrappedActions");
-const _wrappedPrivateActions = Symbol('wrappedPrivateActions');
-const _stateSetCallback = Symbol("stateSetCallback");
-const _hasBeenInitialized = Symbol("hasBeenInitialized");
-
 class StateManager {
-    init(actions, privateActions, initFunc, stateSetCallback) {
+    _hasBeenInitialized: boolean
+    _actions: Object
+    _wrappedActions: Object
+    _wrappedPrivateActions: Object
+    _privateActions: Object
+    _state: any
+    _stateSetCallback: Function
+
+    init(actions: Object, privateActions: Object, initFunc: Function, stateSetCallback: Function) {
         // attach stateManager to window for debugging
         if (window) window.stateManager = this;
 
         try {
-            if (!this[_hasBeenInitialized]) {
-                this[_hasBeenInitialized] = true;
+            if (!this._hasBeenInitialized) {
+                this._hasBeenInitialized = true;
 
                 /* wrap actions */
                 const wrappedActions = reduce(actions, this.wrapActions, {});
                 const wrappedPrivateActions = reduce(privateActions, this.wrapActions, {});
 
-                this[_wrappedActions] = {
+                this._wrappedActions = {
                     ...wrappedActions
                 };
 
-                this[_wrappedPrivateActions] = {
+                this._wrappedPrivateActions = {
                     ...wrappedPrivateActions
                 }
 
@@ -34,14 +35,14 @@ class StateManager {
                     ...wrappedPrivateActions
                 }
 
-                this[_actions] = actions;
-                this[_privateActions] = privateActions;
+                this._actions = actions;
+                this._privateActions = privateActions;
 
                 /* Set initial state from init function */
-                this[_state] = initFunc(this[_wrappedActions]);
+                this._state = initFunc(this._wrappedActions);
 
                 /* set state callback, most likely a setState React method */
-                this[_stateSetCallback] = stateSetCallback;
+                this._stateSetCallback = stateSetCallback;
             }
 
             else {
@@ -54,20 +55,20 @@ class StateManager {
         }
     }
 
-    get actions() {
-        return this[_wrappedActions];
+    getActions(): Object {
+        return this._wrappedActions;
     }
 
-    get privateActions() {
-        return this[_wrappedPrivateActions];
+    getPrivateActions(): Object {
+        return this._wrappedPrivateActions;
     }
 
-    get state() {
-        return this[_state];
+    getState(): any {
+        return this._state;
     }
 
     /* wraps actions with... the actionWrapper */
-    wrapActions = (acc, val, name) => {
+    wrapActions = (acc: any, val: any, name: string) => {
         if (typeof val === "function") {
             acc[name] = (...args) => this.actionWrapper(name, val, ...args);
         }
@@ -75,21 +76,21 @@ class StateManager {
     };
 
     /* injects state and actions as args into actions that are called. */
-    actionWrapper(name, func, ...args) {
+    actionWrapper(name: string, func: Function, ...args: any) {
         // call the action function with correct args.
         if (this._loggingEnabled) {
-            console.log("action: ", name, this[_state]);
+            console.log("action: ", name, this._state);
         }
 
-        const newState = func(() => this[_state], this[_wrappedActions], ...args);
+        const newState = func(() => this._state, this._wrappedActions, ...args);
 
         this.handleActionReturnTypes(newState);
 
-        return this[_state];
+        return this._state;
     }
 
     /* handles standard values, promises (from async functions) and generator function return values */
-    handleActionReturnTypes = async (newState) => {
+    handleActionReturnTypes = async (newState: Object) => {
         if (typeof newState.then === 'function') {
             const n = await newState;
             this.callSetStateCallback(n);
@@ -107,7 +108,7 @@ class StateManager {
     };
 
     /* A recursive function to handle the output of generator functions. */
-    generatorHandler = async (genObject) => {
+    generatorHandler = async (genObject: Object) => {
         const {value, done} = genObject.next();
 
         if (value) {
@@ -124,11 +125,11 @@ class StateManager {
     };
 
     /* Calls the setState callback */
-    callSetStateCallback = (newState) => {
+    callSetStateCallback = (newState: Object) => {
         // call the callback specified in the init method.
         // NOTE: can do a check to see if state has been changed.
-        this[_state] = newState;
-        this[_stateSetCallback](this[_state], this[_wrappedActions]);
+        this._state = newState;
+        this._stateSetCallback(this._state, this._wrappedActions);
     };
 
     // _loggingEnabled = process.env.NODE_ENV == 'development' ? true : false;

@@ -1,6 +1,7 @@
+// @flow
 import {has} from 'ramda';
 
-export const createEntity = (entityClass, props, ...children) => {
+export const createEntity = (entityClass: any, props: any, ...children: any) => {
     // TODO: Do better error handling!
     // TODO: is there a way to not have keys on every entity, or to infer them?
     //

@@ -124,8 +124,7 @@ class EntityInstance {
         this.entity.props = props;
         this.entity.children = children;
 
-        const entityClassActions = entityClass.actions || {};
-
+        const entityClassActions = this.entity.actions || {};
         // Might want to pass isFirstInTree to StateManager.
         this.stateManager = new StateManager();
 
@@ -136,7 +135,7 @@ class EntityInstance {
             (state, actions) => this.updateState(state)
         );
 
-        this.actions = this.stateManager.actions;
+        this.actions = this.stateManager.getActions();
     }
 
     // should this be async?
@@ -161,7 +160,7 @@ class EntityInstance {
 
         // create
         if (has('create', this.entity)) {
-            this.stateManager.privateActions.create(passedParams, this);
+            this.stateManager.getPrivateActions().create(passedParams, this);
         }
 
         else {
@@ -206,7 +205,7 @@ class EntityInstance {
         }
     }
 
-    _update = (stuff) => {
+    _update = (stuff: any) => {
         console.log('internal update', stuff);
     }
 
@@ -215,7 +214,7 @@ class EntityInstance {
             nextProps: {...this.props},
             nextChildren: this.children,
             actions: this.actions,
-            state: this.stateManager.state
+            state: this.stateManager.getState()
         };
 
         if (this.childEntities) {
@@ -231,7 +230,7 @@ class EntityInstance {
                 props: {...this.props},
                 children: this.children,
                 actions: this.actions,
-                state: this.stateManager.state
+                state: this.stateManager.getState()
             });
             // If entityClassNames are same, then we can assume that this level didn't change.
             // Can add extra checks for props later, or put those in the component.
@@ -271,10 +270,9 @@ class EntityInstance {
         if (has('didUpdate', this.entity)) {
             this.entity.didUpdate(prevParams);
         }
-
     }
 
-    updateState = (newState) => {
+    updateState = (newState: Object) => {
         if (this.isFirstInTree) {
             this.entity.appState = newState;
         }
@@ -293,7 +291,7 @@ class EntityInstance {
         }
     }
 
-    createState = async (state, actions, passedParams, ctx) => {
+    createState = async (state, actions, passedParams, ctx): Object => {
         ctx.shouldUpdate = false;
 
         const newState = await ctx.entity.create(passedParams);
@@ -303,23 +301,23 @@ class EntityInstance {
         return newState;
     }
 
-    get props() {
+    get props(): Object {
         return this._props;
     }
 
-    set props(props) {
+    set props(props: Object) {
         this._props = isNil(props) ? {} : props;
     }
 
-    get children() {
+    get children(): Array {
         return this._children;
     }
 
-    set children(children) {
+    set children(children: ?Array): void {
         this._children = isArray(children) ? flatten(children) : [];
     }
 
-    get state() {
+    get state(): Object {
         return this._createdState;
     }
 }
