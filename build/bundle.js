@@ -16922,7 +16922,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // console.log('yo', entityClass, props, children);
 	    var newProps = (0, _extends3.default)({ key: 'parent' }, props);
 	
-	    var wrappedEntity = new _EntityWrapper2.default(entityClass, newProps, children, {}, true);
+	    var wrappedEntity = new _EntityWrapper2.default(entityClass, newProps, children);
 	
 	    wrappedEntity.mount(newProps, children);
 	};
@@ -17231,6 +17231,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 	
+	var _extends2 = __webpack_require__(27);
+	
+	var _extends3 = _interopRequireDefault(_extends2);
+	
 	var _regenerator = __webpack_require__(51);
 	
 	var _regenerator2 = _interopRequireDefault(_regenerator);
@@ -17238,10 +17242,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _asyncToGenerator2 = __webpack_require__(55);
 	
 	var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
-	
-	var _extends2 = __webpack_require__(27);
-	
-	var _extends3 = _interopRequireDefault(_extends2);
 	
 	var _classCallCheck2 = __webpack_require__(3);
 	
@@ -17273,9 +17273,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var entityClass = _ref.entityClass;
 	    var props = _ref.props;
 	    var children = _ref.children;
-	    var passedActions = _ref.passedActions;
 	
-	    var entityInstance = new EntityInstance(entityClass, props, children, passedActions, false);
+	    var entityInstance = new EntityInstance(entityClass, props, children);
 	
 	    return {
 	        entityClass: entityClass,
@@ -17287,8 +17286,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	});
 	
-	var handleRenderContent = function handleRenderContent(content, passedActions) {
-	    return (0, _ramda.pipe)(_functional.rejectNil, (0, _ramda.map)((0, _ramda.assoc)('passedActions', passedActions)), createEntityInstanceObjects)(content);
+	var handleRenderContent = function handleRenderContent(content) {
+	    return (0, _ramda.pipe)(_functional.rejectNil, createEntityInstanceObjects)(content);
 	};
 	
 	var diffComponents = function diffComponents(oldContent, newContent) {
@@ -17351,8 +17350,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return childEntity;
 	});
 	
-	var processAddedContent = function processAddedContent(addContent, passedActions) {
-	    var newEntities = handleRenderContent(addContent, passedActions);
+	var processAddedContent = function processAddedContent(addContent) {
+	    var newEntities = handleRenderContent(addContent);
 	    return mountChildren(newEntities);
 	};
 	
@@ -17363,7 +17362,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return entityInstance._remove();
 	});
 	
-	var generateChildEntities = function generateChildEntities(oldContent, newContent, passedActions) {
+	var generateChildEntities = function generateChildEntities(oldContent, newContent) {
 	    var _diffComponents = diffComponents(oldContent, newContent);
 	
 	    var added = _diffComponents.added;
@@ -17371,7 +17370,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var removed = _diffComponents.removed;
 	
 	
-	    var addedEntities = processAddedContent(added, passedActions);
+	    var addedEntities = processAddedContent(added);
 	    var updatedEntities = processUpdatedContent(updated);
 	    removed.length > 0 && processRemovedContent(removed);
 	
@@ -17387,33 +17386,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var EntityInstance = function () {
 	    function EntityInstance(entityClass, props, children) {
-	        var _this = this;
-	
-	        var passedActions = arguments.length <= 3 || arguments[3] === undefined ? {} : arguments[3];
-	        var isFirstInTree = arguments[4];
 	        (0, _classCallCheck3.default)(this, EntityInstance);
 	
 	        _initialiseProps.call(this);
 	
 	        this.entityClass = entityClass;
 	        this.entity = new entityClass();
-	        this.isFirstInTree = isFirstInTree;
 	
 	        this.entity.props = props;
 	        this.entity.children = children;
 	
-	        var entityClassActions = this.entity.actions || {};
+	        // const entityClassActions = this.entity.actions || {};
 	        // Might want to pass isFirstInTree to StateManager.
-	        this.stateManager = new _StateManager2.default();
-	
-	        this.stateManager.init((0, _extends3.default)({}, passedActions, entityClassActions), function () {
-	            return {};
-	        }, // initial state...
-	        function (state, actions) {
-	            return _this.updateState(state);
-	        });
-	
-	        this.actions = this.stateManager.getActions();
+	        // this.stateManager = new StateManager();
+	        //
+	        // this.stateManager.init(
+	        //     {...passedActions, ...entityClassActions},
+	        //     () => {return {};}, // initial state...
+	        //     (state, actions) => this.updateState(state)
+	        // );
+	        //
+	        // this.actions = this.stateManager.getActions();
+	        // this.setStateActions = mapObjIndexed((action, actionName) => {
+	        //     return action.then((newState) => this.stateManager.callSetStateCallback(newState))
+	        // }, this.stateManager.getActions())
 	    }
 	
 	    // should this be async?
@@ -17435,17 +17431,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        set: function set(children) {
 	            this._children = (0, _lodash.isArray)(children) ? (0, _lodash.flatten)(children) : [];
 	        }
-	    }, {
-	        key: 'state',
-	        get: function get() {
-	            return this._createdState;
-	        }
 	    }]);
 	    return EntityInstance;
 	}();
 	
 	var _initialiseProps = function _initialiseProps() {
-	    var _this2 = this;
+	    var _this = this;
 	
 	    this.mount = function () {
 	        var _ref5 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(props, children) {
@@ -17454,191 +17445,206 @@ return /******/ (function(modules) { // webpackBootstrap
 	                while (1) {
 	                    switch (_context.prev = _context.next) {
 	                        case 0:
-	                            _this2.entity.props = props;
-	                            _this2.entity.children = children;
+	                            _this.entity.props = props;
+	                            _this.entity.children = children;
 	
-	                            _this2.props = props;
-	                            _this2.children = children;
+	                            _this.props = props;
+	                            _this.children = children;
 	
 	                            passedParams = {
-	                                actions: _this2.actions,
+	                                // actions: this.actions,
 	                                props: props,
 	                                children: children
 	                            };
 	
 	                            // willMount
 	
-	                            if ((0, _ramda.has)('willMount', _this2.entity)) {
-	                                _this2.entity.willMount(passedParams);
+	                            if ((0, _ramda.has)('willMount', _this.entity)) {
+	                                _this.entity.willMount(passedParams);
 	                            }
 	
 	                            // create
 	
-	                            if (!(0, _ramda.has)('create', _this2.entity)) {
+	                            if (!(0, _ramda.has)('create', _this.entity)) {
 	                                _context.next = 11;
 	                                break;
 	                            }
 	
 	                            _context.next = 9;
-	                            return _this2.entity.create(passedParams);
+	                            return _this.entity.create(passedParams);
 	
 	                        case 9:
 	                            initState = _context.sent;
 	
-	                            _this2.stateManager.setState(initState);
+	                            _this.setState(initState);
 	
 	                        case 11:
-	                            _context.next = 13;
-	                            return _this2.afterStateCreated(_this2.stateManager.getState());
 	
-	                        case 13:
+	                            _this.afterStateCreated();
+	
+	                        case 12:
 	                        case 'end':
 	                            return _context.stop();
 	                    }
 	                }
-	            }, _callee, _this2);
+	            }, _callee, _this);
 	        }));
 	
-	        return function (_x2, _x3) {
+	        return function (_x, _x2) {
 	            return _ref5.apply(this, arguments);
 	        };
 	    }();
 	
-	    this.afterStateCreated = function () {
-	        var _ref6 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2(state) {
-	            var passedParamsWithState, renderContent;
-	            return _regenerator2.default.wrap(function _callee2$(_context2) {
-	                while (1) {
-	                    switch (_context2.prev = _context2.next) {
-	                        case 0:
-	                            _this2.shouldUpdate = true;
+	    this.afterStateCreated = function (state) {
+	        _this.shouldUpdate = true;
 	
-	                            passedParamsWithState = {
-	                                props: _this2.props,
-	                                children: _this2.children,
-	                                actions: _this2.actions,
-	                                state: state
-	                            };
-	
-	                            // didCreate
-	
-	                            if ((0, _ramda.has)('didCreate', _this2.entity)) {
-	                                _this2.entity.didCreate(passedParamsWithState);
-	                                // handle async stuff here.
-	                            }
-	
-	                            // mount the children
-	                            if ((0, _ramda.has)('render', _this2.entity)) {
-	                                //TODO: will need to add checks for other values besides <Entity> and null in render array.
-	                                renderContent = getRenderContent(_this2.entity, passedParamsWithState);
-	
-	
-	                                if (renderContent && renderContent.length && renderContent.length > 0) {
-	                                    _this2.childEntities = handleRenderContent(renderContent, _this2.entity.actions);
-	
-	                                    // mount children
-	                                    _this2.childEntities.map(function (childEntity) {
-	                                        childEntity.entityInstance.mount(childEntity.props, childEntity.children);
-	                                    });
-	                                }
-	                            }
-	
-	                            // didMount
-	                            if ((0, _ramda.has)('didMount', _this2.entity)) {
-	                                _this2.entity.didMount(passedParamsWithState);
-	                            }
-	
-	                        case 5:
-	                        case 'end':
-	                            return _context2.stop();
-	                    }
-	                }
-	            }, _callee2, _this2);
-	        }));
-	
-	        return function (_x4) {
-	            return _ref6.apply(this, arguments);
-	        };
-	    }();
-	
-	    this.update = function () {
-	        var nextParams = {
-	            nextProps: (0, _extends3.default)({}, _this2.props),
-	            nextChildren: _this2.children,
-	            actions: _this2.actions,
-	            state: _this2.stateManager.getState()
+	        var passedParamsWithState = {
+	            props: _this.props,
+	            children: _this.children,
+	            state: _this.state
 	        };
 	
-	        if (_this2.childEntities) {
-	            // willUpdate
-	            if ((0, _ramda.has)('willUpdate', _this2.entity)) {
-	                _this2.entity.willUpdate(nextParams);
-	            }
+	        // didCreate
+	        if ((0, _ramda.has)('didCreate', _this.entity)) {
+	            _this.entity.didCreate(passedParamsWithState);
+	            // handle async stuff here.
+	        }
 	
-	            // get new rendered children.
-	            var newContent = getRenderContent(_this2.entity, {
-	                props: (0, _extends3.default)({}, _this2.props),
-	                children: _this2.children,
-	                actions: _this2.actions,
-	                state: _this2.stateManager.getState()
-	            });
-	            // If entityClassNames are same, then we can assume that this level didn't change.
-	            // Can add extra checks for props later, or put those in the component.
-	            var oldComponentNames = _this2.childEntities.map(function (child) {
-	                return child.entityClass.name;
-	            });
-	            var newComponentNames = newContent.map(function (child) {
-	                return child.entityClassName;
-	            });
+	        // mount the children
+	        if ((0, _ramda.has)('render', _this.entity)) {
+	            //TODO: will need to add checks for other values besides <Entity> and null in render array.
+	            var renderContent = getRenderContent(_this.entity, passedParamsWithState);
 	
-	            if ((0, _lodash.isEqual)(oldComponentNames, newComponentNames)) {
-	                // No add/remove of components is needed.
-	                // Just update Props.
-	                var zippedChildren = (0, _lodash.zip)(_this2.childEntities, newContent);
+	            if (renderContent && renderContent.length && renderContent.length > 0) {
+	                _this.childEntities = handleRenderContent(renderContent, _this.entity.actions);
 	
-	                _this2.childEntities = (0, _ramda.map)(updateChild, zippedChildren);
-	            } else {
-	                _this2.childEntities = generateChildEntities(_this2.childEntities, newContent, _this2.entity.actions);
+	                // mount children
+	                _this.childEntities.map(function (childEntity) {
+	                    childEntity.entityInstance.mount(childEntity.props, childEntity.children);
+	                });
 	            }
 	        }
 	
-	        var prevParams = {
-	            prevProps: (0, _extends3.default)({}, _this2.entity.props),
-	            prevChildren: _this2.entity.children,
-	            actions: _this2.actions
-	        };
-	
-	        // update
-	        // The update process might be the "pipeline" that I've been thinking of.
-	        if ((0, _ramda.has)('update', _this2.entity)) {
-	            _this2.entity.update(nextParams);
-	
-	            _this2.entity.props = _this2.props;
-	            _this2.entity.children = _this2.children;
-	        }
-	
-	        // didUpdate
-	        if ((0, _ramda.has)('didUpdate', _this2.entity)) {
-	            _this2.entity.didUpdate(prevParams);
+	        // didMount
+	        if ((0, _ramda.has)('didMount', _this.entity)) {
+	            _this.entity.didMount(passedParamsWithState);
 	        }
 	    };
 	
-	    this.updateState = function (newState) {
-	        if (_this2.isFirstInTree) {
-	            _this2.entity.appState = newState;
-	        }
+	    this.update = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2() {
+	        var willUpdateActions, prevState, nextParams, newContent, oldComponentNames, newComponentNames, zippedChildren, prevParams;
+	        return _regenerator2.default.wrap(function _callee2$(_context2) {
+	            while (1) {
+	                switch (_context2.prev = _context2.next) {
+	                    case 0:
+	                        willUpdateActions = (0, _ramda.mapObjIndexed)(function (action, actionName) {
+	                            return function () {
+	                                for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+	                                    args[_key] = arguments[_key];
+	                                }
 	
-	        _this2.entity.state = newState;
+	                                _this.currentActions.push({
+	                                    action: action,
+	                                    actionName: actionName,
+	                                    args: args
+	                                });
+	                            };
+	                        }, _this.actions);
+	                        prevState = _this.state;
+	                        nextParams = {
+	                            nextProps: (0, _extends3.default)({}, _this.props),
+	                            nextChildren: _this.children,
+	                            state: _this.state
+	                        };
 	
-	        if (_this2.shouldUpdate) {
-	            _this2.update();
+	                        // willUpdate
+	
+	                        if (!(0, _ramda.has)('willUpdate', _this.entity)) {
+	                            _context2.next = 7;
+	                            break;
+	                        }
+	
+	                        _context2.next = 6;
+	                        return _this.entity.willUpdate(nextParams);
+	
+	                    case 6:
+	
+	                        _this.currentActions = [];
+	
+	                    case 7:
+	
+	                        if (_this.childEntities) {
+	
+	                            // get new rendered children.
+	                            newContent = getRenderContent(_this.entity, {
+	                                props: (0, _extends3.default)({}, _this.props),
+	                                children: _this.children,
+	                                state: _this.state
+	                            });
+	                            // If entityClassNames are same, then we can assume that this level didn't change.
+	                            // Can add extra checks for props later, or put those in the component.
+	
+	                            oldComponentNames = _this.childEntities.map(function (child) {
+	                                return child.entityClass.name;
+	                            });
+	                            newComponentNames = newContent.map(function (child) {
+	                                return child.entityClassName;
+	                            });
+	
+	
+	                            if ((0, _lodash.isEqual)(oldComponentNames, newComponentNames)) {
+	                                // No add/remove of components is needed.
+	                                // Just update Props.
+	                                zippedChildren = (0, _lodash.zip)(_this.childEntities, newContent);
+	
+	
+	                                _this.childEntities = (0, _ramda.map)(updateChild, zippedChildren);
+	                            } else {
+	                                _this.childEntities = generateChildEntities(_this.childEntities, newContent);
+	                            }
+	                        }
+	
+	                        prevParams = {
+	                            prevProps: (0, _extends3.default)({}, _this.entity.props),
+	                            prevChildren: _this.entity.children,
+	                            prevState: prevState
+	                        };
+	
+	                        // update
+	                        // The update process might be the "pipeline" that I've been thinking of.
+	
+	                        if ((0, _ramda.has)('update', _this.entity)) {
+	                            _this.entity.update(nextParams);
+	
+	                            _this.entity.props = _this.props;
+	                            _this.entity.children = _this.children;
+	                        }
+	
+	                        // didUpdate
+	                        if ((0, _ramda.has)('didUpdate', _this.entity)) {
+	                            _this.entity.didUpdate(prevParams);
+	                        }
+	
+	                    case 11:
+	                    case 'end':
+	                        return _context2.stop();
+	                }
+	            }
+	        }, _callee2, _this);
+	    }));
+	
+	    this.setState = function (newState) {
+	        _this.state = newState;
+	
+	        if (_this.shouldUpdate) {
+	            _this.update();
 	        }
 	    };
 	
 	    this._remove = function () {
 	        // Figure out if anything needs to happen here.
-	        if ((0, _ramda.has)('willUnmount', _this2.entity)) {
-	            _this2.entity.willUnmount();
+	        if ((0, _ramda.has)('willUnmount', _this.entity)) {
+	            _this.entity.willUnmount();
 	        }
 	    };
 	};
@@ -19728,6 +19734,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 	
+	var _promise = __webpack_require__(56);
+	
+	var _promise2 = _interopRequireDefault(_promise);
+	
 	var _toConsumableArray2 = __webpack_require__(116);
 	
 	var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
@@ -19776,7 +19786,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	
 	        this.handleActionReturnTypes = function () {
-	            var _ref = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(newState) {
+	            var _ref = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(newState, cb) {
 	                var n;
 	                return _regenerator2.default.wrap(function _callee$(_context) {
 	                    while (1) {
@@ -19793,7 +19803,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            case 3:
 	                                n = _context.sent;
 	
-	                                _this.callSetStateCallback(n);
+	                                cb(n);
 	                                _context.next = 8;
 	                                break;
 	
@@ -19801,12 +19811,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                                // Detect if newState is actually a generator function.
 	                                if (typeof newState.next === 'function') {
-	                                    _this.generatorHandler(newState);
+	                                    _this.generatorHandler(newState, cb);
 	                                }
 	
 	                                // newState should be an immutable object.
 	                                else {
-	                                        _this.callSetStateCallback(newState);
+	                                        cb(newState);
 	                                    }
 	
 	                            case 8:
@@ -19817,13 +19827,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }, _callee, _this);
 	            }));
 	
-	            return function (_x) {
+	            return function (_x, _x2) {
 	                return _ref.apply(this, arguments);
 	            };
 	        }();
 	
 	        this.generatorHandler = function () {
-	            var _ref2 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2(genObject) {
+	            var _ref2 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2(genObject, cb) {
 	                var _genObject$next, value, done;
 	
 	                return _regenerator2.default.wrap(function _callee2$(_context2) {
@@ -19849,12 +19859,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                            case 7:
 	
-	                                _this.handleActionReturnTypes(value);
+	                                _this.handleActionReturnTypes(value, cb);
 	
 	                            case 8:
 	
 	                                if (!done) {
-	                                    _this.generatorHandler(genObject);
+	                                    _this.generatorHandler(genObject, cb);
 	                                }
 	
 	                            case 9:
@@ -19865,7 +19875,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }, _callee2, _this);
 	            }));
 	
-	            return function (_x2) {
+	            return function (_x3, _x4) {
 	                return _ref2.apply(this, arguments);
 	            };
 	        }();
@@ -19927,11 +19937,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return this._wrappedActions;
 	        }
 	    }, {
-	        key: "getPrivateActions",
-	        value: function getPrivateActions() {
-	            return this._wrappedPrivateActions;
-	        }
-	    }, {
 	        key: "getState",
 	        value: function getState() {
 	            return this._state;
@@ -19968,9 +19973,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return _this2._state;
 	            }, this._wrappedActions].concat((0, _toConsumableArray3.default)(args)));
 	
-	            this.handleActionReturnTypes(newState);
+	            return new _promise2.default(function (resolve, reject) {
+	                _this2.handleActionReturnTypes(newState, resolve);
+	            });
 	
-	            return this._state;
+	            // this.callSetStateCallback(ns);
 	        }
 	
 	        /* handles standard values, promises (from async functions) and generator function return values */
@@ -29061,6 +29068,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	}();
 	
+	// Calls nested async types in a sync manner.
+	
 	var sync = exports.sync = function () {
 	    var _ref2 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2(value) {
 	        var newValue, _newValue;
@@ -29069,40 +29078,35 @@ return /******/ (function(modules) { // webpackBootstrap
 	            while (1) {
 	                switch (_context2.prev = _context2.next) {
 	                    case 0:
-	                        console.log('yo');
-	
 	                        if (!(typeof value.then === 'function')) {
-	                            _context2.next = 9;
+	                            _context2.next = 7;
 	                            break;
 	                        }
 	
-	                        console.log('a');
-	                        _context2.next = 5;
+	                        _context2.next = 3;
 	                        return value;
 	
-	                    case 5:
+	                    case 3:
 	                        newValue = _context2.sent;
 	                        return _context2.abrupt('return', sync(newValue));
 	
-	                    case 9:
+	                    case 7:
 	                        if (!(typeof value.next === 'function')) {
-	                            _context2.next = 17;
+	                            _context2.next = 14;
 	                            break;
 	                        }
 	
-	                        console.log('b');
-	                        _context2.next = 13;
+	                        _context2.next = 10;
 	                        return generatorHandler(value);
 	
-	                    case 13:
+	                    case 10:
 	                        _newValue = _context2.sent;
 	                        return _context2.abrupt('return', _newValue);
 	
-	                    case 17:
-	                        console.log('c');
+	                    case 14:
 	                        return _context2.abrupt('return', value);
 	
-	                    case 19:
+	                    case 15:
 	                    case 'end':
 	                        return _context2.stop();
 	                }
@@ -29117,9 +29121,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	;
-	
-	;
+	;;
 
 /***/ }
 /******/ ])

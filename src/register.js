@@ -7,7 +7,7 @@ export const register = (configObj: {entityClass: any, children: any, props: ?Ob
     // console.log('yo', entityClass, props, children);
     const newProps: Object = {key: 'parent', ...props};
 
-    const wrappedEntity: EntityWrapper = new EntityWrapper(entityClass, newProps, children, {}, true);
+    const wrappedEntity: EntityWrapper = new EntityWrapper(entityClass, newProps, children);
 
     wrappedEntity.mount(newProps, children);
 }

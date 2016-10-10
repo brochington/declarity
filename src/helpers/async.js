@@ -14,11 +14,9 @@ export async function generatorHandler(genObject: Object) {
 
 };
 
-
+// Calls nested async types in a sync manner.
 export async function sync(value: Object) {
-    console.log('yo');
     if (typeof value.then === 'function') {
-        console.log('a');
         const newValue = await value;
 
         return sync(newValue);
@@ -26,13 +24,11 @@ export async function sync(value: Object) {
 
     // Detect if newState is actually a generator function.
     else if (typeof value.next === 'function') {
-        console.log('b');
         const newValue = await generatorHandler(value);
         return newValue;
     }
 
     else {
-        console.log('c');
         return value;
     }
 };

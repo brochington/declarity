@@ -54,10 +54,6 @@ class StateManager {
         return this._wrappedActions;
     }
 
-    getPrivateActions(): Object {
-        return this._wrappedPrivateActions;
-    }
-
     getState(): any {
         return this._state;
     }
@@ -84,31 +80,33 @@ class StateManager {
 
         const newState = func(() => this._state, this._wrappedActions, ...args);
 
-        this.handleActionReturnTypes(newState);
+        return new Promise((resolve, reject) => {
+            this.handleActionReturnTypes(newState, resolve);
+        })
 
-        return this._state;
+            // this.callSetStateCallback(ns);
     }
 
     /* handles standard values, promises (from async functions) and generator function return values */
-    handleActionReturnTypes = async (newState: Object) => {
+    handleActionReturnTypes = async (newState: Object, cb: Function) => {
         if (typeof newState.then === 'function') {
             const n = await newState;
-            this.callSetStateCallback(n);
+            cb(n);
         }
 
         // Detect if newState is actually a generator function.
         else if (typeof newState.next === 'function') {
-            this.generatorHandler(newState);
+            this.generatorHandler(newState, cb);
         }
 
         // newState should be an immutable object.
         else {
-            this.callSetStateCallback(newState);
+            cb(newState)
         }
     };
 
     /* A recursive function to handle the output of generator functions. */
-    generatorHandler = async (genObject: Object) => {
+    generatorHandler = async (genObject: Object, cb: Function) => {
         const {value, done} = genObject.next();
 
         if (value) {
@@ -116,11 +114,11 @@ class StateManager {
                 await value;
             }
 
-            this.handleActionReturnTypes(value);
+            this.handleActionReturnTypes(value, cb);
         }
 
         if (!done) {
-            this.generatorHandler(genObject)
+            this.generatorHandler(genObject, cb)
         }
     };
 

@@ -1,12 +1,20 @@
 import StateManager from './StateManager';
 import {isArray, flatten, isEqual, zip} from 'lodash';
 
-import {map, pipe, isNil, assoc, has, reduce} from 'ramda';
+import {
+    map,
+    pipe,
+    isNil,
+    assoc,
+    has,
+    reduce,
+    mapObjIndexed
+} from 'ramda';
 import {rejectNil, contentByKey} from './helpers/functional';
 import {sync} from './helpers/async';
 
-const createEntityInstanceObjects = map(({entityClass, props, children, passedActions}) => {
-    const entityInstance = new EntityInstance(entityClass, props, children, passedActions, false);
+const createEntityInstanceObjects = map(({entityClass, props, children}) => {
+    const entityInstance = new EntityInstance(entityClass, props, children);
 
     return {
         entityClass,
@@ -18,9 +26,8 @@ const createEntityInstanceObjects = map(({entityClass, props, children, passedAc
     }
 });
 
-const handleRenderContent = (content, passedActions) => pipe(
+const handleRenderContent = (content) => pipe(
     rejectNil,
-    map(assoc('passedActions', passedActions)),
     createEntityInstanceObjects
 )(content);
 
@@ -79,8 +86,8 @@ const mountChildren = map((childEntity) => {
     return childEntity;
 });
 
-const processAddedContent = (addContent, passedActions) => {
-    const newEntities = handleRenderContent(addContent, passedActions);
+const processAddedContent = (addContent) => {
+    const newEntities = handleRenderContent(addContent);
     return mountChildren(newEntities);
 }
 
@@ -88,10 +95,10 @@ const processUpdatedContent = map(updateChild);
 
 const processRemovedContent = map(({entityInstance}) => entityInstance._remove())
 
-const generateChildEntities = (oldContent, newContent, passedActions) => {
+const generateChildEntities = (oldContent, newContent) => {
     const {added, updated, removed} = diffComponents(oldContent, newContent);
 
-    const addedEntities = processAddedContent(added, passedActions);
+    const addedEntities = processAddedContent(added);
     const updatedEntities = processUpdatedContent(updated);
     removed.length > 0 && processRemovedContent(removed);
 
@@ -110,25 +117,27 @@ const getRenderContent = (entity, params) => {
 }
 
 class EntityInstance {
-    constructor(entityClass, props, children, passedActions = {}, isFirstInTree) {
+    constructor(entityClass, props, children) {
         this.entityClass = entityClass;
         this.entity = new entityClass();
-        this.isFirstInTree = isFirstInTree;
 
         this.entity.props = props;
         this.entity.children = children;
 
-        const entityClassActions = this.entity.actions || {};
+        // const entityClassActions = this.entity.actions || {};
         // Might want to pass isFirstInTree to StateManager.
-        this.stateManager = new StateManager();
-
-        this.stateManager.init(
-            {...passedActions, ...entityClassActions},
-            () => {return {};}, // initial state...
-            (state, actions) => this.updateState(state)
-        );
-
-        this.actions = this.stateManager.getActions();
+        // this.stateManager = new StateManager();
+        //
+        // this.stateManager.init(
+        //     {...passedActions, ...entityClassActions},
+        //     () => {return {};}, // initial state...
+        //     (state, actions) => this.updateState(state)
+        // );
+        //
+        // this.actions = this.stateManager.getActions();
+        // this.setStateActions = mapObjIndexed((action, actionName) => {
+        //     return action.then((newState) => this.stateManager.callSetStateCallback(newState))
+        // }, this.stateManager.getActions())
     }
 
     // should this be async?
@@ -140,7 +149,7 @@ class EntityInstance {
         this.children = children;
 
         const passedParams = {
-            actions: this.actions,
+            // actions: this.actions,
             props,
             children
         }
@@ -153,20 +162,19 @@ class EntityInstance {
         // create
         if (has('create', this.entity)) {
             const initState = await this.entity.create(passedParams);
-            this.stateManager.setState(initState);
+            this.setState(initState);
         }
 
-        await this.afterStateCreated(this.stateManager.getState());
+        this.afterStateCreated();
     }
 
-    afterStateCreated = async (state) => {
+    afterStateCreated = (state) => {
         this.shouldUpdate = true;
 
         const passedParamsWithState = {
             props: this.props,
             children: this.children,
-            actions: this.actions,
-            state
+            state: this.state
         }
 
         // didCreate
@@ -196,26 +204,38 @@ class EntityInstance {
         }
     }
 
-    update = () => {
+    update = async () => {
+        const willUpdateActions = mapObjIndexed((action, actionName) => {
+            return (...args) => {
+                this.currentActions.push({
+                    action,
+                    actionName,
+                    args
+                });
+            }
+        }, this.actions);
+        const prevState = this.state;
+
         const nextParams = {
             nextProps: {...this.props},
             nextChildren: this.children,
-            actions: this.actions,
-            state: this.stateManager.getState()
+            state: this.state
         };
 
+        // willUpdate
+        if (has('willUpdate', this.entity)) {
+            await this.entity.willUpdate(nextParams);
+
+            this.currentActions = [];
+        }
+
         if (this.childEntities) {
-            // willUpdate
-            if (has('willUpdate', this.entity)) {
-                this.entity.willUpdate(nextParams);
-            }
 
             // get new rendered children.
             const newContent = getRenderContent(this.entity, {
                 props: {...this.props},
                 children: this.children,
-                actions: this.actions,
-                state: this.stateManager.getState()
+                state: this.state
             });
             // If entityClassNames are same, then we can assume that this level didn't change.
             // Can add extra checks for props later, or put those in the component.
@@ -231,14 +251,14 @@ class EntityInstance {
             }
 
             else {
-                this.childEntities = generateChildEntities(this.childEntities, newContent, this.entity.actions);
+                this.childEntities = generateChildEntities(this.childEntities, newContent);
             }
         }
 
         const prevParams = {
             prevProps : {...this.entity.props},
             prevChildren: this.entity.children,
-            actions: this.actions
+            prevState
         }
 
 
@@ -257,12 +277,8 @@ class EntityInstance {
         }
     }
 
-    updateState = (newState: Object) => {
-        if (this.isFirstInTree) {
-            this.entity.appState = newState;
-        }
-
-        this.entity.state = newState;
+    setState = (newState: any) => {
+        this.state = newState;
 
         if (this.shouldUpdate) {
             this.update();
@@ -290,10 +306,6 @@ class EntityInstance {
 
     set children(children: ?Array): void {
         this._children = isArray(children) ? flatten(children) : [];
-    }
-
-    get state(): Object {
-        return this._createdState;
     }
 }
 
