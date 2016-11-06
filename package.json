@@ -24,7 +24,8 @@
   "dependencies": {
     "babel-runtime": "^6.11.6",
     "immutable": "^3.7.5",
-    "lodash": "^4.13.1"
+    "lodash": "^4.13.1",
+    "ramda": "^0.22.1"
   },
   "devDependencies": {
     "babel-core": "^6.7.4",

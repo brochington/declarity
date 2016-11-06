@@ -1,5 +1,4 @@
 // @flow
-import {has} from 'ramda';
 
 export const createEntity = (entityClass: any, props: any, ...children: any) => {
     // TODO: Do better error handling!
