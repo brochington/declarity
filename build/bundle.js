@@ -73,7 +73,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _register = __webpack_require__(26);
 	
-	var _createEntity = __webpack_require__(105);
+	var _createEntity = __webpack_require__(106);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -17874,11 +17874,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _lodash = __webpack_require__(24);
 	
-	var _ramda = __webpack_require__(106);
+	var _ramda = __webpack_require__(103);
 	
-	var _functional = __webpack_require__(103);
+	var _functional = __webpack_require__(104);
 	
-	var _async = __webpack_require__(104);
+	var _async = __webpack_require__(105);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -18347,8 +18347,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  runtime = global.regeneratorRuntime = inModule ? module.exports : {};
 	
 	  function wrap(innerFn, outerFn, self, tryLocsList) {
-	    // If outerFn provided, then outerFn.prototype instanceof Generator.
-	    var generator = Object.create((outerFn || Generator).prototype);
+	    // If outerFn provided and outerFn.prototype is a Generator, then outerFn.prototype instanceof Generator.
+	    var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator;
+	    var generator = Object.create(protoGenerator.prototype);
 	    var context = new Context(tryLocsList || []);
 	
 	    // The ._invoke method unifies the implementations of the .next,
@@ -20716,175 +20717,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 103 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.contentByKey = exports.rejectNil = undefined;
-	
-	var _ramda = __webpack_require__(106);
-	
-	var rejectNil = exports.rejectNil = (0, _ramda.reject)(_ramda.isNil);
-	
-	var _contentByKey = function _contentByKey(acc, v) {
-	    acc[v.key] = v;
-	    return acc;
-	};
-	
-	// Takes an array and creates a map indexed with the key property value in each entry in array.
-	// [{key: a}] -> {a: {key: a}}
-	var contentByKey = exports.contentByKey = function contentByKey(content) {
-	    return (0, _ramda.reduce)(_contentByKey, {}, content);
-	};
-
-/***/ },
-/* 104 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.sync = exports.generatorHandler = undefined;
-	
-	var _regenerator = __webpack_require__(51);
-	
-	var _regenerator2 = _interopRequireDefault(_regenerator);
-	
-	var _asyncToGenerator2 = __webpack_require__(55);
-	
-	var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
-	
-	/* A recursive function to handle the output of generator functions. */
-	var generatorHandler = exports.generatorHandler = function () {
-	    var _ref = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(genObject) {
-	        var _genObject$next, value, done;
-	
-	        return _regenerator2.default.wrap(function _callee$(_context) {
-	            while (1) {
-	                switch (_context.prev = _context.next) {
-	                    case 0:
-	                        _genObject$next = genObject.next(), value = _genObject$next.value, done = _genObject$next.done;
-	
-	                        if (!value) {
-	                            _context.next = 5;
-	                            break;
-	                        }
-	
-	                        if (!(typeof value.then === 'function')) {
-	                            _context.next = 5;
-	                            break;
-	                        }
-	
-	                        _context.next = 5;
-	                        return value;
-	
-	                    case 5:
-	                        return _context.abrupt('return', done ? sync(value) : generatorHandler(genObject));
-	
-	                    case 6:
-	                    case 'end':
-	                        return _context.stop();
-	                }
-	            }
-	        }, _callee, this);
-	    }));
-	
-	    return function generatorHandler(_x) {
-	        return _ref.apply(this, arguments);
-	    };
-	}();
-	
-	// Calls nested async types in a sync manner.
-	var sync = exports.sync = function () {
-	    var _ref2 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2(value) {
-	        var newValue, _newValue;
-	
-	        return _regenerator2.default.wrap(function _callee2$(_context2) {
-	            while (1) {
-	                switch (_context2.prev = _context2.next) {
-	                    case 0:
-	                        if (!(typeof value.then === 'function')) {
-	                            _context2.next = 7;
-	                            break;
-	                        }
-	
-	                        _context2.next = 3;
-	                        return value;
-	
-	                    case 3:
-	                        newValue = _context2.sent;
-	                        return _context2.abrupt('return', sync(newValue));
-	
-	                    case 7:
-	                        if (!(typeof value.next === 'function')) {
-	                            _context2.next = 14;
-	                            break;
-	                        }
-	
-	                        _context2.next = 10;
-	                        return generatorHandler(value);
-	
-	                    case 10:
-	                        _newValue = _context2.sent;
-	                        return _context2.abrupt('return', _newValue);
-	
-	                    case 14:
-	                        return _context2.abrupt('return', value);
-	
-	                    case 15:
-	                    case 'end':
-	                        return _context2.stop();
-	                }
-	            }
-	        }, _callee2, this);
-	    }));
-	
-	    return function sync(_x2) {
-	        return _ref2.apply(this, arguments);
-	    };
-	}();
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	;;
-
-/***/ },
-/* 105 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	var createEntity = exports.createEntity = function createEntity(entityClass, props) {
-	    for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-	        children[_key - 2] = arguments[_key];
-	    }
-	
-	    // TODO: Do better error handling!
-	    // TODO: is there a way to not have keys on every entity, or to infer them?
-	    //
-	    // if (!props || !has('key', props)) {
-	    //     console.error('Entity does not has key prop: ', entityClass.name, props);
-	    // }
-	
-	    return {
-	        entityClass: entityClass,
-	        entityClassName: entityClass.name,
-	        props: props,
-	        key: props && props.key ? props.key : entityClass.name + '-no-key',
-	        children: children
-	    };
-	};
-
-/***/ },
-/* 106 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//  Ramda v0.22.1
@@ -29719,6 +29551,175 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	}.call(this));
 
+
+/***/ },
+/* 104 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.contentByKey = exports.rejectNil = undefined;
+	
+	var _ramda = __webpack_require__(103);
+	
+	var rejectNil = exports.rejectNil = (0, _ramda.reject)(_ramda.isNil);
+	
+	var _contentByKey = function _contentByKey(acc, v) {
+	    acc[v.key] = v;
+	    return acc;
+	};
+	
+	// Takes an array and creates a map indexed with the key property value in each entry in array.
+	// [{key: a}] -> {a: {key: a}}
+	var contentByKey = exports.contentByKey = function contentByKey(content) {
+	    return (0, _ramda.reduce)(_contentByKey, {}, content);
+	};
+
+/***/ },
+/* 105 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.sync = exports.generatorHandler = undefined;
+	
+	var _regenerator = __webpack_require__(51);
+	
+	var _regenerator2 = _interopRequireDefault(_regenerator);
+	
+	var _asyncToGenerator2 = __webpack_require__(55);
+	
+	var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
+	
+	/* A recursive function to handle the output of generator functions. */
+	var generatorHandler = exports.generatorHandler = function () {
+	    var _ref = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(genObject) {
+	        var _genObject$next, value, done;
+	
+	        return _regenerator2.default.wrap(function _callee$(_context) {
+	            while (1) {
+	                switch (_context.prev = _context.next) {
+	                    case 0:
+	                        _genObject$next = genObject.next(), value = _genObject$next.value, done = _genObject$next.done;
+	
+	                        if (!value) {
+	                            _context.next = 5;
+	                            break;
+	                        }
+	
+	                        if (!(typeof value.then === 'function')) {
+	                            _context.next = 5;
+	                            break;
+	                        }
+	
+	                        _context.next = 5;
+	                        return value;
+	
+	                    case 5:
+	                        return _context.abrupt('return', done ? sync(value) : generatorHandler(genObject));
+	
+	                    case 6:
+	                    case 'end':
+	                        return _context.stop();
+	                }
+	            }
+	        }, _callee, this);
+	    }));
+	
+	    return function generatorHandler(_x) {
+	        return _ref.apply(this, arguments);
+	    };
+	}();
+	
+	// Calls nested async types in a sync manner.
+	var sync = exports.sync = function () {
+	    var _ref2 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2(value) {
+	        var newValue, _newValue;
+	
+	        return _regenerator2.default.wrap(function _callee2$(_context2) {
+	            while (1) {
+	                switch (_context2.prev = _context2.next) {
+	                    case 0:
+	                        if (!(typeof value.then === 'function')) {
+	                            _context2.next = 7;
+	                            break;
+	                        }
+	
+	                        _context2.next = 3;
+	                        return value;
+	
+	                    case 3:
+	                        newValue = _context2.sent;
+	                        return _context2.abrupt('return', sync(newValue));
+	
+	                    case 7:
+	                        if (!(typeof value.next === 'function')) {
+	                            _context2.next = 14;
+	                            break;
+	                        }
+	
+	                        _context2.next = 10;
+	                        return generatorHandler(value);
+	
+	                    case 10:
+	                        _newValue = _context2.sent;
+	                        return _context2.abrupt('return', _newValue);
+	
+	                    case 14:
+	                        return _context2.abrupt('return', value);
+	
+	                    case 15:
+	                    case 'end':
+	                        return _context2.stop();
+	                }
+	            }
+	        }, _callee2, this);
+	    }));
+	
+	    return function sync(_x2) {
+	        return _ref2.apply(this, arguments);
+	    };
+	}();
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	;;
+
+/***/ },
+/* 106 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	var createEntity = exports.createEntity = function createEntity(entityClass, props) {
+	    for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+	        children[_key - 2] = arguments[_key];
+	    }
+	
+	    // TODO: Do better error handling!
+	    // TODO: is there a way to not have keys on every entity, or to infer them?
+	    //
+	    // if (!props || !has('key', props)) {
+	    //     console.error('Entity does not has key prop: ', entityClass.name, props);
+	    // }
+	
+	    return {
+	        entityClass: entityClass,
+	        entityClassName: entityClass.name,
+	        props: props,
+	        key: props && props.key ? props.key : entityClass.name + '-no-key',
+	        children: children
+	    };
+	};
 
 /***/ }
 /******/ ])
