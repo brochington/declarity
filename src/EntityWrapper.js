@@ -1,4 +1,3 @@
-import StateManager from './StateManager';
 import {isArray, flatten, isEqual, zip} from 'lodash';
 
 import {
@@ -123,21 +122,6 @@ class EntityInstance {
 
         this.entity.props = props;
         this.entity.children = children;
-
-        // const entityClassActions = this.entity.actions || {};
-        // Might want to pass isFirstInTree to StateManager.
-        // this.stateManager = new StateManager();
-        //
-        // this.stateManager.init(
-        //     {...passedActions, ...entityClassActions},
-        //     () => {return {};}, // initial state...
-        //     (state, actions) => this.updateState(state)
-        // );
-        //
-        // this.actions = this.stateManager.getActions();
-        // this.setStateActions = mapObjIndexed((action, actionName) => {
-        //     return action.then((newState) => this.stateManager.callSetStateCallback(newState))
-        // }, this.stateManager.getActions())
     }
 
     // should this be async?
