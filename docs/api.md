@@ -18,27 +18,28 @@ class MyEntity extends Entity {
 
 When mounting:
 
-`willMount`
+`willMount({props, children})`
 
-`create`
+`create({props, children})`
+- returns state for the entity.
 
-`didCreate`
+`didCreate({props, state, children})`
 
-`render`
+`render({props, state, children})`
 
 `didMount`
 
 When updating:
 
-`willUpdate`
+`willUpdate({nextProps, props, nextChildren, children, nextState, state})`
 
-`update`
+`update()`
 
-`didUpdate`
+`didUpdate({prevProps, prevChildren, prevState, props, children, state})`
 
 When being destructed:
 
-`willUnmount`
+`willUnmount({props, children, state})`
 
 
 

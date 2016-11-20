@@ -73,7 +73,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _register = __webpack_require__(26);
 	
-	var _createEntity = __webpack_require__(106);
+	var _createEntity = __webpack_require__(100);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -17870,11 +17870,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _lodash = __webpack_require__(24);
 	
-	var _ramda = __webpack_require__(103);
+	var _ramda = __webpack_require__(97);
 	
-	var _functional = __webpack_require__(104);
+	var _functional = __webpack_require__(98);
 	
-	var _async = __webpack_require__(105);
+	var _async = __webpack_require__(99);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -18041,39 +18041,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                            _this.props = props;
 	                            _this.children = children;
+	                            _this.shouldUpdate = false;
 	
 	                            passedParams = {
-	                                // actions: this.actions,
 	                                props: props,
-	                                children: children
+	                                children: children,
+	                                setState: _this.setState
 	                            };
 	
 	                            // willMount
 	
 	                            if ((0, _ramda.has)('willMount', _this.entity)) {
+	                                _this._callingWillMount = true;
 	                                _this.entity.willMount(passedParams);
+	                                _this._callingWillMount = false;
 	                            }
 	
 	                            // create
 	
 	                            if (!(0, _ramda.has)('create', _this.entity)) {
-	                                _context.next = 11;
+	                                _context.next = 14;
 	                                break;
 	                            }
 	
-	                            _context.next = 9;
+	                            _this._callingCreate = true;
+	                            _context.next = 11;
 	                            return _this.entity.create(passedParams);
 	
-	                        case 9:
+	                        case 11:
 	                            initState = _context.sent;
 	
+	                            _this._callingCreate = false;
 	                            _this.setState(initState);
 	
-	                        case 11:
+	                        case 14:
 	
 	                            _this.afterStateCreated();
 	
-	                        case 12:
+	                        case 15:
 	                        case 'end':
 	                            return _context.stop();
 	                    }
@@ -18097,14 +18102,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        // didCreate
 	        if ((0, _ramda.has)('didCreate', _this.entity)) {
-	            _this.entity.didCreate(passedParamsWithState);
+	            var didCreateParams = (0, _extends3.default)({}, passedParamsWithState, {
+	                setState: function setState(newState) {
+	                    console.log('didCreate setState', newState);
+	                    _this.shouldUpdate = false;
+	
+	                    _this.setState(newState);
+	                }
+	            });
+	            _this.entity.didCreate(didCreateParams);
 	            // handle async stuff here.
 	        }
 	
 	        // mount the children
 	        if ((0, _ramda.has)('render', _this.entity)) {
+	            _this._callingRender = true;
 	            //TODO: will need to add checks for other values besides <Entity> and null in render array.
 	            var renderContent = getRenderContent(_this.entity, passedParamsWithState);
+	            _this._callingRender = false;
 	
 	            if (renderContent && renderContent.length && renderContent.length > 0) {
 	                _this.childEntities = handleRenderContent(renderContent, _this.entity.actions);
@@ -18145,36 +18160,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        nextParams = {
 	                            nextProps: (0, _extends3.default)({}, _this.props),
 	                            nextChildren: _this.children,
-	                            state: _this.state
+	                            state: _this.state,
+	                            setState: _this.setState
 	                        };
 	
 	                        // willUpdate
 	
 	                        if (!(0, _ramda.has)('willUpdate', _this.entity)) {
-	                            _context2.next = 7;
+	                            _context2.next = 9;
 	                            break;
 	                        }
 	
-	                        _context2.next = 6;
+	                        _this._callingWillUpdate = true;
+	                        _context2.next = 7;
 	                        return _this.entity.willUpdate(nextParams);
 	
-	                    case 6:
+	                    case 7:
+	                        _this._callingWillUpdate = false;
 	
 	                        _this.currentActions = [];
 	
-	                    case 7:
+	                    case 9:
 	
 	                        if (_this.childEntities) {
 	
 	                            // get new rendered children.
+	                            _this._callingRender = true;
 	                            newContent = getRenderContent(_this.entity, {
 	                                props: (0, _extends3.default)({}, _this.props),
 	                                children: _this.children,
 	                                state: _this.state
 	                            });
+	
+	                            _this._callingRender = false;
 	                            // If entityClassNames are same, then we can assume that this level didn't change.
 	                            // Can add extra checks for props later, or put those in the component.
-	
 	                            oldComponentNames = _this.childEntities.map(function (child) {
 	                                return child.entityClass.name;
 	                            });
@@ -18205,7 +18225,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        // The update process might be the "pipeline" that I've been thinking of.
 	
 	                        if ((0, _ramda.has)('update', _this.entity)) {
+	                            _this._callingUpdate = true;
 	                            _this.entity.update(nextParams);
+	                            _this._callingUpdate = false;
 	
 	                            _this.entity.props = _this.props;
 	                            _this.entity.children = _this.children;
@@ -18213,10 +18235,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                        // didUpdate
 	                        if ((0, _ramda.has)('didUpdate', _this.entity)) {
+	                            _this._callingDidUpdate = true;
 	                            _this.entity.didUpdate(prevParams);
+	                            _this._callingDidUpdate = false;
 	                        }
 	
-	                    case 11:
+	                    case 13:
 	                    case 'end':
 	                        return _context2.stop();
 	                }
@@ -18225,6 +18249,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }));
 	
 	    this.setState = function (newState) {
+	        if (_this._callingWillMount) {
+	            console.log('trying to call setState in willMount. This is a noop');
+	            return;
+	        }
+	
+	        if (_this._callingCreate) {
+	            console.log('trying to call setState in create(). This is a noop');
+	            return;
+	        }
+	
 	        _this.state = newState;
 	
 	        if (_this.shouldUpdate) {
@@ -20327,13 +20361,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 97 */,
-/* 98 */,
-/* 99 */,
-/* 100 */,
-/* 101 */,
-/* 102 */,
-/* 103 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//  Ramda v0.22.1
@@ -29170,7 +29198,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 104 */
+/* 98 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29180,7 +29208,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 	exports.contentByKey = exports.rejectNil = undefined;
 	
-	var _ramda = __webpack_require__(103);
+	var _ramda = __webpack_require__(97);
 	
 	var rejectNil = exports.rejectNil = (0, _ramda.reject)(_ramda.isNil);
 	
@@ -29196,7 +29224,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 105 */
+/* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29309,7 +29337,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	;;
 
 /***/ },
-/* 106 */
+/* 100 */
 /***/ function(module, exports) {
 
 	'use strict';

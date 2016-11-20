@@ -9,6 +9,7 @@ import {
     reduce,
     mapObjIndexed
 } from 'ramda';
+
 import {rejectNil, contentByKey} from './helpers/functional';
 import {sync} from './helpers/async';
 
@@ -131,21 +132,26 @@ class EntityInstance {
 
         this.props = props;
         this.children = children;
+        this.shouldUpdate = false;
 
         const passedParams = {
-            // actions: this.actions,
             props,
-            children
+            children,
+            setState: this.setState
         }
 
         // willMount
         if (has('willMount', this.entity)) {
+            this._callingWillMount = true;
             this.entity.willMount(passedParams);
+            this._callingWillMount = false;
         }
 
         // create
         if (has('create', this.entity)) {
+            this._callingCreate = true;
             const initState = await this.entity.create(passedParams);
+            this._callingCreate = false;
             this.setState(initState);
         }
 
@@ -163,14 +169,25 @@ class EntityInstance {
 
         // didCreate
         if (has('didCreate', this.entity)) {
-            this.entity.didCreate(passedParamsWithState);
+            const didCreateParams = {
+                ...passedParamsWithState,
+                setState: (newState) => {
+                    console.log('didCreate setState', newState);
+                    this.shouldUpdate = false;
+
+                    this.setState(newState);
+                }
+            }
+            this.entity.didCreate(didCreateParams);
             // handle async stuff here.
         }
 
         // mount the children
         if (has('render', this.entity)) {
+            this._callingRender = true;
             //TODO: will need to add checks for other values besides <Entity> and null in render array.
             const renderContent = getRenderContent(this.entity, passedParamsWithState);
+            this._callingRender = false;
 
             if (renderContent && renderContent.length && renderContent.length > 0) {
                 this.childEntities = handleRenderContent(renderContent, this.entity.actions);
@@ -180,6 +197,7 @@ class EntityInstance {
                     childEntity.entityInstance.mount(childEntity.props, childEntity.children);
                 });
             }
+
         }
 
         // didMount
@@ -203,12 +221,15 @@ class EntityInstance {
         const nextParams = {
             nextProps: {...this.props},
             nextChildren: this.children,
-            state: this.state
+            state: this.state,
+            setState: this.setState
         };
 
         // willUpdate
         if (has('willUpdate', this.entity)) {
+            this._callingWillUpdate = true;
             await this.entity.willUpdate(nextParams);
+            this._callingWillUpdate = false;
 
             this.currentActions = [];
         }
@@ -216,11 +237,13 @@ class EntityInstance {
         if (this.childEntities) {
 
             // get new rendered children.
+            this._callingRender = true;
             const newContent = getRenderContent(this.entity, {
                 props: {...this.props},
                 children: this.children,
                 state: this.state
             });
+            this._callingRender = false;
             // If entityClassNames are same, then we can assume that this level didn't change.
             // Can add extra checks for props later, or put those in the component.
             const oldComponentNames = this.childEntities.map(child => child.entityClass.name);
@@ -249,7 +272,9 @@ class EntityInstance {
         // update
         // The update process might be the "pipeline" that I've been thinking of.
         if (has('update', this.entity)) {
+            this._callingUpdate = true;
             this.entity.update(nextParams);
+            this._callingUpdate = false;
 
             this.entity.props = this.props;
             this.entity.children = this.children;
@@ -257,11 +282,23 @@ class EntityInstance {
 
         // didUpdate
         if (has('didUpdate', this.entity)) {
+            this._callingDidUpdate = true;
             this.entity.didUpdate(prevParams);
+            this._callingDidUpdate = false;
         }
     }
 
     setState = (newState: any) => {
+        if (this._callingWillMount) {
+            console.log('trying to call setState in willMount. This is a noop');
+            return;
+        }
+
+        if (this._callingCreate) {
+            console.log('trying to call setState in create(). This is a noop');
+            return;
+        }
+
         this.state = newState;
 
         if (this.shouldUpdate) {
