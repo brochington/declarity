@@ -18218,7 +18218,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        prevParams = {
 	                            prevProps: (0, _extends3.default)({}, _this.entity.props),
 	                            prevChildren: _this.entity.children,
-	                            prevState: prevState
+	                            prevState: prevState,
+	                            props: _this.props,
+	                            children: _this.children,
+	                            state: _this.state,
+	                            setState: _this.setState
 	                        };
 	
 	                        // update
@@ -18226,7 +18230,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                        if ((0, _ramda.has)('update', _this.entity)) {
 	                            _this._callingUpdate = true;
-	                            _this.entity.update(nextParams);
+	                            _this.entity.update(prevParams);
 	                            _this._callingUpdate = false;
 	
 	                            _this.entity.props = _this.props;
@@ -18259,7 +18263,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return;
 	        }
 	
-	        _this.state = newState;
+	        _this.state = (0, _extends3.default)({}, _this.state, newState);
 	
 	        if (_this.shouldUpdate) {
 	            _this.update();

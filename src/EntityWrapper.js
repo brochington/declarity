@@ -265,7 +265,11 @@ class EntityInstance {
         const prevParams = {
             prevProps : {...this.entity.props},
             prevChildren: this.entity.children,
-            prevState
+            prevState,
+            props: this.props,
+            children: this.children,
+            state: this.state,
+            setState: this.setState
         }
 
 
@@ -273,7 +277,7 @@ class EntityInstance {
         // The update process might be the "pipeline" that I've been thinking of.
         if (has('update', this.entity)) {
             this._callingUpdate = true;
-            this.entity.update(nextParams);
+            this.entity.update(prevParams);
             this._callingUpdate = false;
 
             this.entity.props = this.props;
@@ -299,7 +303,10 @@ class EntityInstance {
             return;
         }
 
-        this.state = newState;
+        this.state = {
+            ...this.state,
+            ...newState
+        }
 
         if (this.shouldUpdate) {
             this.update();
