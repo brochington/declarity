@@ -1,0 +1,22 @@
+language: node_js
+
+node_js:
+  - "6.9.1"
+
+env:
+  - NODE_ENV=travis
+
+branches:
+  only:
+    - master
+
+addons:
+  firefox: latest
+
+install: npm install
+
+before_script:
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+
+script: npm run test:travis
