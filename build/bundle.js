@@ -18003,9 +18003,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.entity.children = children;
 	    }
 	
-	    // should this be async?
-	
-	
 	    (0, _createClass3.default)(EntityInstance, [{
 	        key: 'props',
 	        get: function get() {

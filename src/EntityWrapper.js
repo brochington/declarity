@@ -125,7 +125,6 @@ class EntityInstance {
         this.entity.children = children;
     }
 
-    // should this be async?
     mount = async (props, children) => {
         this.entity.props = props;
         this.entity.children = children;
