@@ -12,7 +12,7 @@ export async function generatorHandler(genObject: Object) {
             ? sync(value)
             : generatorHandler(genObject)
 
-};
+}
 
 // Calls nested async types in a sync manner.
 export async function sync(value: Object) {
@@ -31,4 +31,4 @@ export async function sync(value: Object) {
     else {
         return value;
     }
-};
+}

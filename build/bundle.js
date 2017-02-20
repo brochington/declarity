@@ -17531,7 +17531,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var entityClass = configObj.entityClass,
 	        children = configObj.children;
 	
-	    var props = configObj || {};
+	    var props = configObj.props || {};
 	    // console.log('yo', entityClass, props, children);
 	    var newProps = (0, _extends3.default)({ key: 'parent' }, props);
 	
@@ -17894,10 +17894,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        entityClassName: entityClass.name
 	    };
 	});
-	
-	var handleRenderContent = function handleRenderContent(content) {
-	    return (0, _ramda.pipe)(_functional.rejectNil, createEntityInstanceObjects)(content);
-	};
+	// TODO: Pretty sure you can remove the outer function here.
+	var handleRenderContent = (0, _ramda.pipe)(_functional.rejectNil, createEntityInstanceObjects);
 	
 	var diffComponents = function diffComponents(oldContent, newContent) {
 	    var newHashMap = (0, _functional.contentByKey)(newContent);
@@ -17985,6 +17983,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var getRenderContent = function getRenderContent(entity, params) {
 	    var content = entity.render(params);
+	    if ((0, _ramda.isNil)(content)) return [];
+	
 	    var contentArray = (0, _lodash.isArray)(content) ? content : (0, _ramda.has)('key', content) ? [content] : [];
 	
 	    return (0, _functional.rejectNil)(contentArray);
@@ -17998,9 +17998,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this.entityClass = entityClass;
 	        this.entity = new entityClass();
-	
-	        this.entity.props = props;
-	        this.entity.children = children;
 	    }
 	
 	    (0, _createClass3.default)(EntityInstance, [{
@@ -18033,9 +18030,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                while (1) {
 	                    switch (_context.prev = _context.next) {
 	                        case 0:
-	                            _this.entity.props = props;
-	                            _this.entity.children = children;
-	
 	                            _this.props = props;
 	                            _this.children = children;
 	                            _this.shouldUpdate = false;
@@ -18057,25 +18051,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            // create
 	
 	                            if (!(0, _ramda.has)('create', _this.entity)) {
-	                                _context.next = 14;
+	                                _context.next = 12;
 	                                break;
 	                            }
 	
 	                            _this._callingCreate = true;
-	                            _context.next = 11;
+	                            _context.next = 9;
 	                            return _this.entity.create(passedParams);
 	
-	                        case 11:
+	                        case 9:
 	                            initState = _context.sent;
 	
 	                            _this._callingCreate = false;
+	
 	                            _this.setState(initState);
 	
-	                        case 14:
+	                        case 12:
 	
 	                            _this.afterStateCreated();
 	
-	                        case 15:
+	                        case 13:
 	                        case 'end':
 	                            return _context.stop();
 	                    }
@@ -18119,7 +18114,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            _this._callingRender = false;
 	
 	            if (renderContent && renderContent.length && renderContent.length > 0) {
-	                _this.childEntities = handleRenderContent(renderContent, _this.entity.actions);
+	                _this.childEntities = handleRenderContent(renderContent);
 	
 	                // mount children
 	                _this.childEntities.map(function (childEntity) {
@@ -18135,25 +18130,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    this.update = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2() {
-	        var willUpdateActions, prevState, nextParams, newContent, oldComponentNames, newComponentNames, zippedChildren, prevParams;
+	        var prevState, prevProps, prevChildren, nextParams, newContent, oldComponentNames, newComponentNames, zippedChildren, prevParams;
 	        return _regenerator2.default.wrap(function _callee2$(_context2) {
 	            while (1) {
 	                switch (_context2.prev = _context2.next) {
 	                    case 0:
-	                        willUpdateActions = (0, _ramda.mapObjIndexed)(function (action, actionName) {
-	                            return function () {
-	                                for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-	                                    args[_key] = arguments[_key];
-	                                }
-	
-	                                _this.currentActions.push({
-	                                    action: action,
-	                                    actionName: actionName,
-	                                    args: args
-	                                });
-	                            };
-	                        }, _this.actions);
 	                        prevState = _this.state;
+	                        prevProps = _this.props;
+	                        prevChildren = _this.children;
 	                        nextParams = {
 	                            nextProps: (0, _extends3.default)({}, _this.props),
 	                            nextChildren: _this.children,
@@ -18169,13 +18153,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        }
 	
 	                        _this._callingWillUpdate = true;
-	                        _context2.next = 7;
+	                        _context2.next = 8;
 	                        return _this.entity.willUpdate(nextParams);
 	
-	                    case 7:
+	                    case 8:
 	                        _this._callingWillUpdate = false;
-	
-	                        _this.currentActions = [];
 	
 	                    case 9:
 	
@@ -18213,8 +18195,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        }
 	
 	                        prevParams = {
-	                            prevProps: (0, _extends3.default)({}, _this.entity.props),
-	                            prevChildren: _this.entity.children,
+	                            prevProps: prevProps,
+	                            prevChildren: prevChildren,
 	                            prevState: prevState,
 	                            props: _this.props,
 	                            children: _this.children,
@@ -18225,23 +18207,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        // update
 	                        // The update process might be the "pipeline" that I've been thinking of.
 	
-	                        if ((0, _ramda.has)('update', _this.entity)) {
-	                            _this._callingUpdate = true;
-	                            _this.entity.update(prevParams);
-	                            _this._callingUpdate = false;
-	
-	                            _this.entity.props = _this.props;
-	                            _this.entity.children = _this.children;
+	                        if (!(0, _ramda.has)('update', _this.entity)) {
+	                            _context2.next = 16;
+	                            break;
 	                        }
 	
-	                        // didUpdate
-	                        if ((0, _ramda.has)('didUpdate', _this.entity)) {
-	                            _this._callingDidUpdate = true;
-	                            _this.entity.didUpdate(prevParams);
-	                            _this._callingDidUpdate = false;
+	                        _this._callingUpdate = true;
+	                        _context2.next = 15;
+	                        return _this.entity.update(prevParams);
+	
+	                    case 15:
+	                        _this._callingUpdate = false;
+	
+	                    case 16:
+	                        if (!(0, _ramda.has)('didUpdate', _this.entity)) {
+	                            _context2.next = 21;
+	                            break;
 	                        }
 	
-	                    case 13:
+	                        _this._callingDidUpdate = true;
+	                        _context2.next = 20;
+	                        return _this.entity.didUpdate(prevParams);
+	
+	                    case 20:
+	                        _this._callingDidUpdate = false;
+	
+	                    case 21:
 	                    case 'end':
 	                        return _context2.stop();
 	                }
@@ -29284,6 +29275,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	}();
 	
 	// Calls nested async types in a sync manner.
+	
+	
 	var sync = exports.sync = function () {
 	    var _ref2 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2(value) {
 	        var newValue, _newValue;
@@ -29332,10 +29325,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return _ref2.apply(this, arguments);
 	    };
 	}();
-	
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	;;
 
 /***/ },
 /* 100 */

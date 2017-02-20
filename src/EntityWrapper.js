@@ -25,11 +25,11 @@ const createEntityInstanceObjects = map(({entityClass, props, children}) => {
         entityClassName: entityClass.name
     }
 });
-
-const handleRenderContent = (content) => pipe(
+// TODO: Pretty sure you can remove the outer function here.
+const handleRenderContent = pipe(
     rejectNil,
     createEntityInstanceObjects
-)(content);
+);
 
 const diffComponents = (oldContent, newContent) => {
     const newHashMap = contentByKey(newContent);
@@ -107,6 +107,8 @@ const generateChildEntities = (oldContent, newContent) => {
 
 const getRenderContent = (entity, params) => {
     const content = entity.render(params);
+    if (isNil(content)) return [];
+
     const contentArray = isArray(content)
                             ? content
                             : has('key', content)
@@ -120,15 +122,9 @@ class EntityInstance {
     constructor(entityClass, props, children) {
         this.entityClass = entityClass;
         this.entity = new entityClass();
-
-        this.entity.props = props;
-        this.entity.children = children;
     }
 
     mount = async (props, children) => {
-        this.entity.props = props;
-        this.entity.children = children;
-
         this.props = props;
         this.children = children;
         this.shouldUpdate = false;
@@ -151,6 +147,7 @@ class EntityInstance {
             this._callingCreate = true;
             const initState = await this.entity.create(passedParams);
             this._callingCreate = false;
+
             this.setState(initState);
         }
 
@@ -189,7 +186,7 @@ class EntityInstance {
             this._callingRender = false;
 
             if (renderContent && renderContent.length && renderContent.length > 0) {
-                this.childEntities = handleRenderContent(renderContent, this.entity.actions);
+                this.childEntities = handleRenderContent(renderContent);
 
                 // mount children
                 this.childEntities.map((childEntity) => {
@@ -206,16 +203,9 @@ class EntityInstance {
     }
 
     update = async () => {
-        const willUpdateActions = mapObjIndexed((action, actionName) => {
-            return (...args) => {
-                this.currentActions.push({
-                    action,
-                    actionName,
-                    args
-                });
-            }
-        }, this.actions);
         const prevState = this.state;
+        const prevProps = this.props;
+        const prevChildren = this.children;
 
         const nextParams = {
             nextProps: {...this.props},
@@ -229,8 +219,6 @@ class EntityInstance {
             this._callingWillUpdate = true;
             await this.entity.willUpdate(nextParams);
             this._callingWillUpdate = false;
-
-            this.currentActions = [];
         }
 
         if (this.childEntities) {
@@ -262,8 +250,8 @@ class EntityInstance {
         }
 
         const prevParams = {
-            prevProps : {...this.entity.props},
-            prevChildren: this.entity.children,
+            prevProps,
+            prevChildren,
             prevState,
             props: this.props,
             children: this.children,
@@ -276,17 +264,14 @@ class EntityInstance {
         // The update process might be the "pipeline" that I've been thinking of.
         if (has('update', this.entity)) {
             this._callingUpdate = true;
-            this.entity.update(prevParams);
+            await this.entity.update(prevParams);
             this._callingUpdate = false;
-
-            this.entity.props = this.props;
-            this.entity.children = this.children;
         }
 
         // didUpdate
         if (has('didUpdate', this.entity)) {
             this._callingDidUpdate = true;
-            this.entity.didUpdate(prevParams);
+            await this.entity.didUpdate(prevParams);
             this._callingDidUpdate = false;
         }
     }
