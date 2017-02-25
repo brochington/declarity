@@ -13,8 +13,8 @@ import {
 import {rejectNil, contentByKey} from './helpers/functional';
 import {sync} from './helpers/async';
 
-const createEntityInstanceObjects = map(({entityClass, props, children}) => {
-    const entityInstance = new EntityInstance(entityClass, props, children);
+const createEntityInstanceObjects = map(({entityClass, props, children, context}) => {
+    const entityInstance = new EntityInstance(entityClass);
 
     return {
         entityClass,
@@ -22,7 +22,8 @@ const createEntityInstanceObjects = map(({entityClass, props, children}) => {
         key: props.key,
         children,
         entityInstance,
-        entityClassName: entityClass.name
+        entityClassName: entityClass.name,
+        context
     }
 });
 
@@ -66,6 +67,7 @@ const diffComponents = (oldContent, newContent) => {
 const updateChild = ([oldChild, newChild]) => {
     const newProps = isNil(newChild.props) ? {} : newChild.props;
     const newChildren = isArray(newChild.children) ? flatten(newChild.children) : [];
+    const newContext = isNil(newChild.context) ? {} : newChild.context;
 
     oldChild.entityInstance.previousProps = oldChild.props;
     oldChild.entityInstance.props = newProps;
@@ -73,13 +75,16 @@ const updateChild = ([oldChild, newChild]) => {
     oldChild.entityInstance.previousChildren = oldChild.children;
     oldChild.entityInstance.children = newChildren;
 
+    oldChild.entityInstance.previousContext = oldChild.context;
+    oldChild.entityInstance.context = newContext;
+
     oldChild.entityInstance.update();
 
     return oldChild;
 }
 
 const mountChildren = map((childEntity) => {
-    childEntity.entityInstance.mount(childEntity.props, childEntity.children);
+    childEntity.entityInstance.mount(childEntity.props, childEntity.children, childEntity.context);
     return childEntity;
 });
 
@@ -116,19 +121,21 @@ const getRenderContent = (entity, params) => {
 }
 
 class EntityInstance {
-    constructor(entityClass, props, children) {
+    constructor(entityClass) {
         this.entityClass = entityClass;
         this.entity = new entityClass();
     }
 
-    mount = async (props, children) => {
+    mount = async (props, children, context = {}) => {
         this.props = props;
         this.children = children;
+        this.context = context;
         this.shouldUpdate = false;
 
         const passedParams = {
             props,
             children,
+            context,
             setState: this.setState
         }
 
@@ -150,14 +157,15 @@ class EntityInstance {
 
         this.afterStateCreated();
     }
-
+    // TODO: merge this in with mount()
     afterStateCreated = (state) => {
         this.shouldUpdate = true;
 
         const passedParamsWithState = {
             props: this.props,
             children: this.children,
-            state: this.state
+            state: this.state,
+            context: this.context
         }
 
         // didCreate
@@ -177,17 +185,35 @@ class EntityInstance {
 
         // mount the children
         if (has('render', this.entity)) {
-            this._callingRender = true;
             //TODO: will need to add checks for other values besides <Entity> and null in render array.
-            const renderContent = getRenderContent(this.entity, passedParamsWithState);
+            let childContext = this.context;
+
+            this._callingRender = true;
+            let renderContent = getRenderContent(this.entity, passedParamsWithState);
             this._callingRender = false;
 
             if (renderContent && renderContent.length && renderContent.length > 0) {
+                if (has('getChildContext', this.entity)) {
+                    const childContextVal = this.entity.getChildContext(passedParamsWithState)
+
+                    if (!isNil(childContextVal)) {
+                        childContext = {
+                            ...childContext,
+                            ...childContextVal
+                        }
+                    }
+
+                    renderContent = renderContent.map(content => {
+                        content.context = childContext
+                        return content;
+                    })
+                }
+
                 this.childEntities = handleRenderContent(renderContent);
 
                 // mount children
                 this.childEntities.map((childEntity) => {
-                    childEntity.entityInstance.mount(childEntity.props, childEntity.children);
+                    childEntity.entityInstance.mount(childEntity.props, childEntity.children, childContext);
                 });
             }
 
@@ -200,7 +226,6 @@ class EntityInstance {
     }
 
     update = async () => {
-        console.log('in update');
         this.shouldUpdate = false;
 
         // willUpdate
@@ -214,14 +239,9 @@ class EntityInstance {
         // The update process might be the "pipeline" that I've been thinking of.
         if (has('update', this.entity)) {
             this._callingUpdate = true;
-            const stuff = this.getEntityParams();
-            console.log('pre', stuff);
-            let updatedState = await this.entity.update(this.getEntityParams());
-            // const updatedState = this.entity.update;
-            // if (updatedState instanceof Promise) {
-            //     console.log('got a Promise', await updatedState);
-            // }
-            console.log('post', updatedState);
+
+            const updatedState = await this.entity.update(this.getEntityParams());
+
             this._callingUpdate = false;
 
             if (!isNil(updatedState)) {
@@ -237,12 +257,22 @@ class EntityInstance {
         }
 
         if (this.childEntities) {
-
             // get new rendered children.
+
+            let childContext = this.context;
+
+            if (has('getChildContext', this.entity)) {
+                const childContextVal = this.entity.getChildContext(this.getEntityParams())
+                if (!isNil(childContextVal)) {
+                    childContext = {...childContext, ...childContextVal}
+                }
+            }
+
             this._callingRender = true;
-
-            const newContent = getRenderContent(this.entity, this.getEntityParams());
-
+            const newContent = getRenderContent(this.entity, this.getEntityParams()).map((content) => {
+                content.context = childContext;
+                return content;
+            });
             this._callingRender = false;
 
             // If entityClassNames are same, then we can assume that this level didn't change.
@@ -288,7 +318,9 @@ class EntityInstance {
         }
 
         if (this.shouldUpdate) {
-            console.log('yo?');
+            // Note: Don't know if setting previous stuff here is proper.
+            this.previousProps = this.props;
+            this.previousChildren = this.children;
             this.update();
         }
     }
@@ -301,15 +333,19 @@ class EntityInstance {
     }
 
     getEntityParams = () => {
-        return {
+        let entityParams = {
             previousProps: this.previousProps,
             previousChildren: this.previousChildren,
             previousState: this.previousState,
+            previousContext: this.previousContext,
             props: this.props,
             children: this.children,
+            context: this.context,
             state: this.state,
             setState: this.setState
         }
+
+        return entityParams;
     }
 
     get props(): Object {

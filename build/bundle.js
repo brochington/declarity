@@ -17883,9 +17883,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var createEntityInstanceObjects = (0, _ramda.map)(function (_ref) {
 	    var entityClass = _ref.entityClass,
 	        props = _ref.props,
-	        children = _ref.children;
+	        children = _ref.children,
+	        context = _ref.context;
 	
-	    var entityInstance = new EntityInstance(entityClass, props, children);
+	    var entityInstance = new EntityInstance(entityClass);
 	
 	    return {
 	        entityClass: entityClass,
@@ -17893,7 +17894,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        key: props.key,
 	        children: children,
 	        entityInstance: entityInstance,
-	        entityClassName: entityClass.name
+	        entityClassName: entityClass.name,
+	        context: context
 	    };
 	});
 	
@@ -17938,6 +17940,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    var newProps = (0, _ramda.isNil)(newChild.props) ? {} : newChild.props;
 	    var newChildren = (0, _lodash.isArray)(newChild.children) ? (0, _lodash.flatten)(newChild.children) : [];
+	    var newContext = (0, _ramda.isNil)(newChild.context) ? {} : newChild.context;
 	
 	    oldChild.entityInstance.previousProps = oldChild.props;
 	    oldChild.entityInstance.props = newProps;
@@ -17945,13 +17948,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    oldChild.entityInstance.previousChildren = oldChild.children;
 	    oldChild.entityInstance.children = newChildren;
 	
+	    oldChild.entityInstance.previousContext = oldChild.context;
+	    oldChild.entityInstance.context = newContext;
+	
 	    oldChild.entityInstance.update();
 	
 	    return oldChild;
 	};
 	
 	var mountChildren = (0, _ramda.map)(function (childEntity) {
-	    childEntity.entityInstance.mount(childEntity.props, childEntity.children);
+	    childEntity.entityInstance.mount(childEntity.props, childEntity.children, childEntity.context);
 	    return childEntity;
 	});
 	
@@ -17990,14 +17996,301 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	var EntityInstance = function () {
-	    function EntityInstance(entityClass, props, children) {
+	    function EntityInstance(entityClass) {
+	        var _this = this;
+	
 	        (0, _classCallCheck3.default)(this, EntityInstance);
 	
-	        _initialiseProps.call(this);
+	        this.mount = function () {
+	            var _ref5 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(props, children) {
+	                var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+	                var passedParams, initState;
+	                return _regenerator2.default.wrap(function _callee$(_context) {
+	                    while (1) {
+	                        switch (_context.prev = _context.next) {
+	                            case 0:
+	                                _this.props = props;
+	                                _this.children = children;
+	                                _this.context = context;
+	                                _this.shouldUpdate = false;
+	
+	                                passedParams = {
+	                                    props: props,
+	                                    children: children,
+	                                    context: context,
+	                                    setState: _this.setState
+	                                };
+	
+	                                // willMount
+	
+	                                if ((0, _ramda.has)('willMount', _this.entity)) {
+	                                    _this._callingWillMount = true;
+	                                    _this.entity.willMount(passedParams);
+	                                    _this._callingWillMount = false;
+	                                }
+	
+	                                // create
+	
+	                                if (!(0, _ramda.has)('create', _this.entity)) {
+	                                    _context.next = 13;
+	                                    break;
+	                                }
+	
+	                                _this._callingCreate = true;
+	                                _context.next = 10;
+	                                return _this.entity.create(passedParams);
+	
+	                            case 10:
+	                                initState = _context.sent;
+	
+	                                _this._callingCreate = false;
+	
+	                                _this.setState(initState);
+	
+	                            case 13:
+	
+	                                _this.afterStateCreated();
+	
+	                            case 14:
+	                            case 'end':
+	                                return _context.stop();
+	                        }
+	                    }
+	                }, _callee, _this);
+	            }));
+	
+	            return function (_x, _x2, _x3) {
+	                return _ref5.apply(this, arguments);
+	            };
+	        }();
+	
+	        this.afterStateCreated = function (state) {
+	            _this.shouldUpdate = true;
+	
+	            var passedParamsWithState = {
+	                props: _this.props,
+	                children: _this.children,
+	                state: _this.state,
+	                context: _this.context
+	            };
+	
+	            // didCreate
+	            if ((0, _ramda.has)('didCreate', _this.entity)) {
+	                var didCreateParams = (0, _extends3.default)({}, passedParamsWithState, {
+	                    setState: function setState(newState) {
+	                        console.log('didCreate setState', newState);
+	                        _this.shouldUpdate = false;
+	
+	                        _this.setState(newState);
+	                    }
+	                });
+	                _this.entity.didCreate(didCreateParams);
+	                // handle async stuff here.
+	            }
+	
+	            // mount the children
+	            if ((0, _ramda.has)('render', _this.entity)) {
+	                (function () {
+	                    //TODO: will need to add checks for other values besides <Entity> and null in render array.
+	                    var childContext = _this.context;
+	
+	                    _this._callingRender = true;
+	                    var renderContent = getRenderContent(_this.entity, passedParamsWithState);
+	                    _this._callingRender = false;
+	
+	                    if (renderContent && renderContent.length && renderContent.length > 0) {
+	                        if ((0, _ramda.has)('getChildContext', _this.entity)) {
+	                            var childContextVal = _this.entity.getChildContext(passedParamsWithState);
+	
+	                            if (!(0, _ramda.isNil)(childContextVal)) {
+	                                childContext = (0, _extends3.default)({}, childContext, childContextVal);
+	                            }
+	
+	                            renderContent = renderContent.map(function (content) {
+	                                content.context = childContext;
+	                                return content;
+	                            });
+	                        }
+	
+	                        _this.childEntities = handleRenderContent(renderContent);
+	
+	                        // mount children
+	                        _this.childEntities.map(function (childEntity) {
+	                            childEntity.entityInstance.mount(childEntity.props, childEntity.children, childContext);
+	                        });
+	                    }
+	                })();
+	            }
+	
+	            // didMount
+	            if ((0, _ramda.has)('didMount', _this.entity)) {
+	                _this.entity.didMount(passedParamsWithState);
+	            }
+	        };
+	
+	        this.update = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2() {
+	            var updatedState;
+	            return _regenerator2.default.wrap(function _callee2$(_context2) {
+	                while (1) {
+	                    switch (_context2.prev = _context2.next) {
+	                        case 0:
+	                            _this.shouldUpdate = false;
+	
+	                            // willUpdate
+	
+	                            if (!(0, _ramda.has)('willUpdate', _this.entity)) {
+	                                _context2.next = 6;
+	                                break;
+	                            }
+	
+	                            _this._callingWillUpdate = true;
+	                            _context2.next = 5;
+	                            return _this.entity.willUpdate(_this.getEntityParams());
+	
+	                        case 5:
+	                            _this._callingWillUpdate = false;
+	
+	                        case 6:
+	                            if (!(0, _ramda.has)('update', _this.entity)) {
+	                                _context2.next = 13;
+	                                break;
+	                            }
+	
+	                            _this._callingUpdate = true;
+	
+	                            _context2.next = 10;
+	                            return _this.entity.update(_this.getEntityParams());
+	
+	                        case 10:
+	                            updatedState = _context2.sent;
+	
+	
+	                            _this._callingUpdate = false;
+	
+	                            if (!(0, _ramda.isNil)(updatedState)) {
+	                                _this.setState(updatedState);
+	                            }
+	
+	                        case 13:
+	                            if (!(0, _ramda.has)('didUpdate', _this.entity)) {
+	                                _context2.next = 18;
+	                                break;
+	                            }
+	
+	                            _this._callingDidUpdate = true;
+	                            _context2.next = 17;
+	                            return _this.entity.didUpdate(_this.getEntityParams());
+	
+	                        case 17:
+	                            _this._callingDidUpdate = false;
+	
+	                        case 18:
+	
+	                            if (_this.childEntities) {
+	                                (function () {
+	                                    // get new rendered children.
+	
+	                                    var childContext = _this.context;
+	
+	                                    if ((0, _ramda.has)('getChildContext', _this.entity)) {
+	                                        var childContextVal = _this.entity.getChildContext(_this.getEntityParams());
+	                                        if (!(0, _ramda.isNil)(childContextVal)) {
+	                                            childContext = (0, _extends3.default)({}, childContext, childContextVal);
+	                                        }
+	                                    }
+	
+	                                    _this._callingRender = true;
+	                                    var newContent = getRenderContent(_this.entity, _this.getEntityParams()).map(function (content) {
+	                                        content.context = childContext;
+	                                        return content;
+	                                    });
+	                                    _this._callingRender = false;
+	
+	                                    // If entityClassNames are same, then we can assume that this level didn't change.
+	                                    // Can add extra checks for props later, or put those in the component.
+	                                    var oldComponentNames = _this.childEntities.map(function (child) {
+	                                        return child.entityClass.name;
+	                                    });
+	                                    var newComponentNames = newContent.map(function (child) {
+	                                        return child.entityClassName;
+	                                    });
+	
+	                                    if ((0, _lodash.isEqual)(oldComponentNames, newComponentNames)) {
+	                                        // No add/remove of components is needed.
+	                                        // Just update Props.
+	                                        var zippedChildren = (0, _lodash.zip)(_this.childEntities, newContent);
+	
+	                                        _this.childEntities = (0, _ramda.map)(updateChild, zippedChildren);
+	                                    } else {
+	                                        _this.childEntities = generateChildEntities(_this.childEntities, newContent);
+	                                    }
+	                                })();
+	                            }
+	
+	                        case 19:
+	                        case 'end':
+	                            return _context2.stop();
+	                    }
+	                }
+	            }, _callee2, _this);
+	        }));
+	
+	        this.setState = function (newState) {
+	            if (_this._callingWillMount) {
+	                console.log('trying to call setState in willMount. This is a noop');
+	                return;
+	            }
+	
+	            if (_this._callingCreate) {
+	                console.log('trying to call setState in create(). This is a noop');
+	                return;
+	            }
+	
+	            if (_this._callingUpdate) {
+	                console.log('trying to call setState in update(). This is a noop. please have the update() method return any updated state.');
+	                return;
+	            }
+	
+	            _this.previousState = _this.state;
+	
+	            _this.state = (0, _extends3.default)({}, _this.state, newState);
+	
+	            if (_this.shouldUpdate) {
+	                // Note: Don't know if setting previous stuff here is proper.
+	                _this.previousProps = _this.props;
+	                _this.previousChildren = _this.children;
+	                _this.update();
+	            }
+	        };
+	
+	        this._remove = function () {
+	            // Figure out if anything needs to happen here.
+	            if ((0, _ramda.has)('willUnmount', _this.entity)) {
+	                _this.entity.willUnmount();
+	            }
+	        };
+	
+	        this.getEntityParams = function () {
+	            var entityParams = {
+	                previousProps: _this.previousProps,
+	                previousChildren: _this.previousChildren,
+	                previousState: _this.previousState,
+	                previousContext: _this.previousContext,
+	                props: _this.props,
+	                children: _this.children,
+	                context: _this.context,
+	                state: _this.state,
+	                setState: _this.setState
+	            };
+	
+	            return entityParams;
+	        };
 	
 	        this.entityClass = entityClass;
 	        this.entity = new entityClass();
 	    }
+	    // TODO: merge this in with mount()
+	
 	
 	    (0, _createClass3.default)(EntityInstance, [{
 	        key: 'props',
@@ -18018,266 +18311,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }]);
 	    return EntityInstance;
 	}();
-	
-	var _initialiseProps = function _initialiseProps() {
-	    var _this = this;
-	
-	    this.mount = function () {
-	        var _ref5 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(props, children) {
-	            var passedParams, initState;
-	            return _regenerator2.default.wrap(function _callee$(_context) {
-	                while (1) {
-	                    switch (_context.prev = _context.next) {
-	                        case 0:
-	                            _this.props = props;
-	                            _this.children = children;
-	                            _this.shouldUpdate = false;
-	
-	                            passedParams = {
-	                                props: props,
-	                                children: children,
-	                                setState: _this.setState
-	                            };
-	
-	                            // willMount
-	
-	                            if ((0, _ramda.has)('willMount', _this.entity)) {
-	                                _this._callingWillMount = true;
-	                                _this.entity.willMount(passedParams);
-	                                _this._callingWillMount = false;
-	                            }
-	
-	                            // create
-	
-	                            if (!(0, _ramda.has)('create', _this.entity)) {
-	                                _context.next = 12;
-	                                break;
-	                            }
-	
-	                            _this._callingCreate = true;
-	                            _context.next = 9;
-	                            return _this.entity.create(passedParams);
-	
-	                        case 9:
-	                            initState = _context.sent;
-	
-	                            _this._callingCreate = false;
-	
-	                            _this.setState(initState);
-	
-	                        case 12:
-	
-	                            _this.afterStateCreated();
-	
-	                        case 13:
-	                        case 'end':
-	                            return _context.stop();
-	                    }
-	                }
-	            }, _callee, _this);
-	        }));
-	
-	        return function (_x, _x2) {
-	            return _ref5.apply(this, arguments);
-	        };
-	    }();
-	
-	    this.afterStateCreated = function (state) {
-	        _this.shouldUpdate = true;
-	
-	        var passedParamsWithState = {
-	            props: _this.props,
-	            children: _this.children,
-	            state: _this.state
-	        };
-	
-	        // didCreate
-	        if ((0, _ramda.has)('didCreate', _this.entity)) {
-	            var didCreateParams = (0, _extends3.default)({}, passedParamsWithState, {
-	                setState: function setState(newState) {
-	                    console.log('didCreate setState', newState);
-	                    _this.shouldUpdate = false;
-	
-	                    _this.setState(newState);
-	                }
-	            });
-	            _this.entity.didCreate(didCreateParams);
-	            // handle async stuff here.
-	        }
-	
-	        // mount the children
-	        if ((0, _ramda.has)('render', _this.entity)) {
-	            _this._callingRender = true;
-	            //TODO: will need to add checks for other values besides <Entity> and null in render array.
-	            var renderContent = getRenderContent(_this.entity, passedParamsWithState);
-	            _this._callingRender = false;
-	
-	            if (renderContent && renderContent.length && renderContent.length > 0) {
-	                _this.childEntities = handleRenderContent(renderContent);
-	
-	                // mount children
-	                _this.childEntities.map(function (childEntity) {
-	                    childEntity.entityInstance.mount(childEntity.props, childEntity.children);
-	                });
-	            }
-	        }
-	
-	        // didMount
-	        if ((0, _ramda.has)('didMount', _this.entity)) {
-	            _this.entity.didMount(passedParamsWithState);
-	        }
-	    };
-	
-	    this.update = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2() {
-	        var stuff, updatedState, newContent, oldComponentNames, newComponentNames, zippedChildren;
-	        return _regenerator2.default.wrap(function _callee2$(_context2) {
-	            while (1) {
-	                switch (_context2.prev = _context2.next) {
-	                    case 0:
-	                        console.log('in update');
-	                        _this.shouldUpdate = false;
-	
-	                        // willUpdate
-	
-	                        if (!(0, _ramda.has)('willUpdate', _this.entity)) {
-	                            _context2.next = 7;
-	                            break;
-	                        }
-	
-	                        _this._callingWillUpdate = true;
-	                        _context2.next = 6;
-	                        return _this.entity.willUpdate(_this.getEntityParams());
-	
-	                    case 6:
-	                        _this._callingWillUpdate = false;
-	
-	                    case 7:
-	                        if (!(0, _ramda.has)('update', _this.entity)) {
-	                            _context2.next = 17;
-	                            break;
-	                        }
-	
-	                        _this._callingUpdate = true;
-	                        stuff = _this.getEntityParams();
-	
-	                        console.log('pre', stuff);
-	                        _context2.next = 13;
-	                        return _this.entity.update(_this.getEntityParams());
-	
-	                    case 13:
-	                        updatedState = _context2.sent;
-	
-	                        // const updatedState = this.entity.update;
-	                        // if (updatedState instanceof Promise) {
-	                        //     console.log('got a Promise', await updatedState);
-	                        // }
-	                        console.log('post', updatedState);
-	                        _this._callingUpdate = false;
-	
-	                        if (!(0, _ramda.isNil)(updatedState)) {
-	                            _this.setState(updatedState);
-	                        }
-	
-	                    case 17:
-	                        if (!(0, _ramda.has)('didUpdate', _this.entity)) {
-	                            _context2.next = 22;
-	                            break;
-	                        }
-	
-	                        _this._callingDidUpdate = true;
-	                        _context2.next = 21;
-	                        return _this.entity.didUpdate(_this.getEntityParams());
-	
-	                    case 21:
-	                        _this._callingDidUpdate = false;
-	
-	                    case 22:
-	
-	                        if (_this.childEntities) {
-	
-	                            // get new rendered children.
-	                            _this._callingRender = true;
-	
-	                            newContent = getRenderContent(_this.entity, _this.getEntityParams());
-	
-	
-	                            _this._callingRender = false;
-	
-	                            // If entityClassNames are same, then we can assume that this level didn't change.
-	                            // Can add extra checks for props later, or put those in the component.
-	                            oldComponentNames = _this.childEntities.map(function (child) {
-	                                return child.entityClass.name;
-	                            });
-	                            newComponentNames = newContent.map(function (child) {
-	                                return child.entityClassName;
-	                            });
-	
-	
-	                            if ((0, _lodash.isEqual)(oldComponentNames, newComponentNames)) {
-	                                // No add/remove of components is needed.
-	                                // Just update Props.
-	                                zippedChildren = (0, _lodash.zip)(_this.childEntities, newContent);
-	
-	
-	                                _this.childEntities = (0, _ramda.map)(updateChild, zippedChildren);
-	                            } else {
-	                                _this.childEntities = generateChildEntities(_this.childEntities, newContent);
-	                            }
-	                        }
-	
-	                    case 23:
-	                    case 'end':
-	                        return _context2.stop();
-	                }
-	            }
-	        }, _callee2, _this);
-	    }));
-	
-	    this.setState = function (newState) {
-	        if (_this._callingWillMount) {
-	            console.log('trying to call setState in willMount. This is a noop');
-	            return;
-	        }
-	
-	        if (_this._callingCreate) {
-	            console.log('trying to call setState in create(). This is a noop');
-	            return;
-	        }
-	
-	        if (_this._callingUpdate) {
-	            console.log('trying to call setState in update(). This is a noop. please have the update() method return any updated state.');
-	            return;
-	        }
-	
-	        _this.previousState = _this.state;
-	
-	        _this.state = (0, _extends3.default)({}, _this.state, newState);
-	
-	        if (_this.shouldUpdate) {
-	            console.log('yo?');
-	            _this.update();
-	        }
-	    };
-	
-	    this._remove = function () {
-	        // Figure out if anything needs to happen here.
-	        if ((0, _ramda.has)('willUnmount', _this.entity)) {
-	            _this.entity.willUnmount();
-	        }
-	    };
-	
-	    this.getEntityParams = function () {
-	        return {
-	            previousProps: _this.previousProps,
-	            previousChildren: _this.previousChildren,
-	            previousState: _this.previousState,
-	            props: _this.props,
-	            children: _this.children,
-	            state: _this.state,
-	            setState: _this.setState
-	        };
-	    };
-	};
 	
 	exports.default = EntityInstance;
 
