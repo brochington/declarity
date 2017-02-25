@@ -17538,6 +17538,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var wrappedEntity = new _EntityWrapper2.default(entityClass, newProps, children);
 	
 	    wrappedEntity.mount(newProps, children);
+	
+	    // might want to return something here so that the mounted component can be dismounted later.
 	};
 
 /***/ },
@@ -17894,7 +17896,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        entityClassName: entityClass.name
 	    };
 	});
-	// TODO: Pretty sure you can remove the outer function here.
+	
 	var handleRenderContent = (0, _ramda.pipe)(_functional.rejectNil, createEntityInstanceObjects);
 	
 	var diffComponents = function diffComponents(oldContent, newContent) {
@@ -17937,14 +17939,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var newProps = (0, _ramda.isNil)(newChild.props) ? {} : newChild.props;
 	    var newChildren = (0, _lodash.isArray)(newChild.children) ? (0, _lodash.flatten)(newChild.children) : [];
 	
-	    // oldChild.appState = this.entity.appState;
-	    // oldChild.entityInstance.entity.appState = this.entity.appState;
-	
-	    oldChild.props = newProps;
+	    oldChild.entityInstance.previousProps = oldChild.props;
 	    oldChild.entityInstance.props = newProps;
 	
-	    oldChild.children = newChildren;
-	    oldChild.entityInstance.newChildren;
+	    oldChild.entityInstance.previousChildren = oldChild.children;
+	    oldChild.entityInstance.children = newChildren;
 	
 	    oldChild.entityInstance.update();
 	
@@ -18130,48 +18129,80 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    this.update = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2() {
-	        var prevState, prevProps, prevChildren, nextParams, newContent, oldComponentNames, newComponentNames, zippedChildren, prevParams;
+	        var stuff, updatedState, newContent, oldComponentNames, newComponentNames, zippedChildren;
 	        return _regenerator2.default.wrap(function _callee2$(_context2) {
 	            while (1) {
 	                switch (_context2.prev = _context2.next) {
 	                    case 0:
-	                        prevState = _this.state;
-	                        prevProps = _this.props;
-	                        prevChildren = _this.children;
-	                        nextParams = {
-	                            nextProps: (0, _extends3.default)({}, _this.props),
-	                            nextChildren: _this.children,
-	                            state: _this.state,
-	                            setState: _this.setState
-	                        };
+	                        console.log('in update');
+	                        _this.shouldUpdate = false;
 	
 	                        // willUpdate
 	
 	                        if (!(0, _ramda.has)('willUpdate', _this.entity)) {
-	                            _context2.next = 9;
+	                            _context2.next = 7;
 	                            break;
 	                        }
 	
 	                        _this._callingWillUpdate = true;
-	                        _context2.next = 8;
-	                        return _this.entity.willUpdate(nextParams);
+	                        _context2.next = 6;
+	                        return _this.entity.willUpdate(_this.getEntityParams());
 	
-	                    case 8:
+	                    case 6:
 	                        _this._callingWillUpdate = false;
 	
-	                    case 9:
+	                    case 7:
+	                        if (!(0, _ramda.has)('update', _this.entity)) {
+	                            _context2.next = 17;
+	                            break;
+	                        }
+	
+	                        _this._callingUpdate = true;
+	                        stuff = _this.getEntityParams();
+	
+	                        console.log('pre', stuff);
+	                        _context2.next = 13;
+	                        return _this.entity.update(_this.getEntityParams());
+	
+	                    case 13:
+	                        updatedState = _context2.sent;
+	
+	                        // const updatedState = this.entity.update;
+	                        // if (updatedState instanceof Promise) {
+	                        //     console.log('got a Promise', await updatedState);
+	                        // }
+	                        console.log('post', updatedState);
+	                        _this._callingUpdate = false;
+	
+	                        if (!(0, _ramda.isNil)(updatedState)) {
+	                            _this.setState(updatedState);
+	                        }
+	
+	                    case 17:
+	                        if (!(0, _ramda.has)('didUpdate', _this.entity)) {
+	                            _context2.next = 22;
+	                            break;
+	                        }
+	
+	                        _this._callingDidUpdate = true;
+	                        _context2.next = 21;
+	                        return _this.entity.didUpdate(_this.getEntityParams());
+	
+	                    case 21:
+	                        _this._callingDidUpdate = false;
+	
+	                    case 22:
 	
 	                        if (_this.childEntities) {
 	
 	                            // get new rendered children.
 	                            _this._callingRender = true;
-	                            newContent = getRenderContent(_this.entity, {
-	                                props: (0, _extends3.default)({}, _this.props),
-	                                children: _this.children,
-	                                state: _this.state
-	                            });
+	
+	                            newContent = getRenderContent(_this.entity, _this.getEntityParams());
+	
 	
 	                            _this._callingRender = false;
+	
 	                            // If entityClassNames are same, then we can assume that this level didn't change.
 	                            // Can add extra checks for props later, or put those in the component.
 	                            oldComponentNames = _this.childEntities.map(function (child) {
@@ -18194,45 +18225,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            }
 	                        }
 	
-	                        prevParams = {
-	                            prevProps: prevProps,
-	                            prevChildren: prevChildren,
-	                            prevState: prevState,
-	                            props: _this.props,
-	                            children: _this.children,
-	                            state: _this.state,
-	                            setState: _this.setState
-	                        };
-	
-	                        // update
-	                        // The update process might be the "pipeline" that I've been thinking of.
-	
-	                        if (!(0, _ramda.has)('update', _this.entity)) {
-	                            _context2.next = 16;
-	                            break;
-	                        }
-	
-	                        _this._callingUpdate = true;
-	                        _context2.next = 15;
-	                        return _this.entity.update(prevParams);
-	
-	                    case 15:
-	                        _this._callingUpdate = false;
-	
-	                    case 16:
-	                        if (!(0, _ramda.has)('didUpdate', _this.entity)) {
-	                            _context2.next = 21;
-	                            break;
-	                        }
-	
-	                        _this._callingDidUpdate = true;
-	                        _context2.next = 20;
-	                        return _this.entity.didUpdate(prevParams);
-	
-	                    case 20:
-	                        _this._callingDidUpdate = false;
-	
-	                    case 21:
+	                    case 23:
 	                    case 'end':
 	                        return _context2.stop();
 	                }
@@ -18251,9 +18244,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return;
 	        }
 	
+	        if (_this._callingUpdate) {
+	            console.log('trying to call setState in update(). This is a noop. please have the update() method return any updated state.');
+	            return;
+	        }
+	
+	        _this.previousState = _this.state;
+	
 	        _this.state = (0, _extends3.default)({}, _this.state, newState);
 	
 	        if (_this.shouldUpdate) {
+	            console.log('yo?');
 	            _this.update();
 	        }
 	    };
@@ -18263,6 +18264,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if ((0, _ramda.has)('willUnmount', _this.entity)) {
 	            _this.entity.willUnmount();
 	        }
+	    };
+	
+	    this.getEntityParams = function () {
+	        return {
+	            previousProps: _this.previousProps,
+	            previousChildren: _this.previousChildren,
+	            previousState: _this.previousState,
+	            props: _this.props,
+	            children: _this.children,
+	            state: _this.state,
+	            setState: _this.setState
+	        };
 	    };
 	};
 	

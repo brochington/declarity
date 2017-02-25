@@ -25,7 +25,7 @@ const createEntityInstanceObjects = map(({entityClass, props, children}) => {
         entityClassName: entityClass.name
     }
 });
-// TODO: Pretty sure you can remove the outer function here.
+
 const handleRenderContent = pipe(
     rejectNil,
     createEntityInstanceObjects
@@ -67,14 +67,11 @@ const updateChild = ([oldChild, newChild]) => {
     const newProps = isNil(newChild.props) ? {} : newChild.props;
     const newChildren = isArray(newChild.children) ? flatten(newChild.children) : [];
 
-    // oldChild.appState = this.entity.appState;
-    // oldChild.entityInstance.entity.appState = this.entity.appState;
-
-    oldChild.props = newProps;
+    oldChild.entityInstance.previousProps = oldChild.props;
     oldChild.entityInstance.props = newProps;
 
-    oldChild.children = newChildren;
-    oldChild.entityInstance.newChildren;
+    oldChild.entityInstance.previousChildren = oldChild.children;
+    oldChild.entityInstance.children = newChildren;
 
     oldChild.entityInstance.update();
 
@@ -203,34 +200,51 @@ class EntityInstance {
     }
 
     update = async () => {
-        const prevState = this.state;
-        const prevProps = this.props;
-        const prevChildren = this.children;
-
-        const nextParams = {
-            nextProps: {...this.props},
-            nextChildren: this.children,
-            state: this.state,
-            setState: this.setState
-        };
+        console.log('in update');
+        this.shouldUpdate = false;
 
         // willUpdate
         if (has('willUpdate', this.entity)) {
             this._callingWillUpdate = true;
-            await this.entity.willUpdate(nextParams);
+            await this.entity.willUpdate(this.getEntityParams());
             this._callingWillUpdate = false;
+        }
+
+        // update
+        // The update process might be the "pipeline" that I've been thinking of.
+        if (has('update', this.entity)) {
+            this._callingUpdate = true;
+            const stuff = this.getEntityParams();
+            console.log('pre', stuff);
+            let updatedState = await this.entity.update(this.getEntityParams());
+            // const updatedState = this.entity.update;
+            // if (updatedState instanceof Promise) {
+            //     console.log('got a Promise', await updatedState);
+            // }
+            console.log('post', updatedState);
+            this._callingUpdate = false;
+
+            if (!isNil(updatedState)) {
+                this.setState(updatedState)
+            }
+        }
+
+        // didUpdate
+        if (has('didUpdate', this.entity)) {
+            this._callingDidUpdate = true;
+            await this.entity.didUpdate(this.getEntityParams());
+            this._callingDidUpdate = false;
         }
 
         if (this.childEntities) {
 
             // get new rendered children.
             this._callingRender = true;
-            const newContent = getRenderContent(this.entity, {
-                props: {...this.props},
-                children: this.children,
-                state: this.state
-            });
+
+            const newContent = getRenderContent(this.entity, this.getEntityParams());
+
             this._callingRender = false;
+
             // If entityClassNames are same, then we can assume that this level didn't change.
             // Can add extra checks for props later, or put those in the component.
             const oldComponentNames = this.childEntities.map(child => child.entityClass.name);
@@ -248,32 +262,6 @@ class EntityInstance {
                 this.childEntities = generateChildEntities(this.childEntities, newContent);
             }
         }
-
-        const prevParams = {
-            prevProps,
-            prevChildren,
-            prevState,
-            props: this.props,
-            children: this.children,
-            state: this.state,
-            setState: this.setState
-        }
-
-
-        // update
-        // The update process might be the "pipeline" that I've been thinking of.
-        if (has('update', this.entity)) {
-            this._callingUpdate = true;
-            await this.entity.update(prevParams);
-            this._callingUpdate = false;
-        }
-
-        // didUpdate
-        if (has('didUpdate', this.entity)) {
-            this._callingDidUpdate = true;
-            await this.entity.didUpdate(prevParams);
-            this._callingDidUpdate = false;
-        }
     }
 
     setState = (newState: any) => {
@@ -287,12 +275,20 @@ class EntityInstance {
             return;
         }
 
+        if (this._callingUpdate) {
+            console.log('trying to call setState in update(). This is a noop. please have the update() method return any updated state.');
+            return;
+        }
+
+        this.previousState = this.state;
+
         this.state = {
             ...this.state,
             ...newState
         }
 
         if (this.shouldUpdate) {
+            console.log('yo?');
             this.update();
         }
     }
@@ -301,6 +297,18 @@ class EntityInstance {
         // Figure out if anything needs to happen here.
         if (has('willUnmount', this.entity)) {
             this.entity.willUnmount();
+        }
+    }
+
+    getEntityParams = () => {
+        return {
+            previousProps: this.previousProps,
+            previousChildren: this.previousChildren,
+            previousState: this.previousState,
+            props: this.props,
+            children: this.children,
+            state: this.state,
+            setState: this.setState
         }
     }
 

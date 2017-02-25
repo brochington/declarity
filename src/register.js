@@ -10,4 +10,6 @@ export const register = (configObj: {entityClass: any, children: any, props: ?Ob
     const wrappedEntity: EntityWrapper = new EntityWrapper(entityClass, newProps, children);
 
     wrappedEntity.mount(newProps, children);
+
+    // might want to return something here so that the mounted component can be dismounted later.
 }
