@@ -1,20 +1,27 @@
-import {isArray, flatten, isEqual, zip} from 'lodash';
-
 import {
     map,
+    reduce,
+    filter,
+    zip,
     pipe,
     isNil,
     assoc,
     has,
-    reduce,
-    mapObjIndexed
+    is,
+    mapObjIndexed,
+    flatten,
+    equals
 } from 'ramda';
 
-import {rejectNil, contentByKey} from './helpers/functional';
-import {sync} from './helpers/async';
+import {
+    rejectNil,
+    contentByKey,
+    onlyObjects,
+    isArray
+} from './helpers/functional';
 
 const createEntityInstanceObjects = map(({entityClass, props, children, context}) => {
-    const entityInstance = new EntityInstance(entityClass);
+    const entityInstance = new EntityWrapper(entityClass);
 
     return {
         entityClass,
@@ -95,7 +102,7 @@ const processAddedContent = (addContent) => {
 
 const processUpdatedContent = map(updateChild);
 
-const processRemovedContent = map(({entityInstance}) => entityInstance._remove())
+const processRemovedContent = map(({entityInstance}) => entityInstance.remove())
 
 const generateChildEntities = (oldContent, newContent) => {
     const {added, updated, removed} = diffComponents(oldContent, newContent);
@@ -117,11 +124,12 @@ const getRenderContent = (entity, params) => {
                                 ? [content]
                                 : [];
 
-    return rejectNil(contentArray);
+    return onlyObjects(contentArray);
 }
 
-class EntityInstance {
+class EntityWrapper {
     constructor(entityClass) {
+        // console.log(entityClass instanceof Object)
         this.entityClass = entityClass;
         this.entity = new entityClass();
     }
@@ -149,10 +157,23 @@ class EntityInstance {
         // create
         if (has('create', this.entity)) {
             this._callingCreate = true;
-            const initState = await this.entity.create(passedParams);
-            this._callingCreate = false;
+            const initState = this.entity.create(passedParams);
 
-            this.setState(initState);
+            if (has('systems', this.props)) {
+                const systemParams = {...passedParams, state: initState};
+
+                const systemsState = this.handleSystems('create', systemParams);
+
+                this._callingCreate = false;
+                this.setState(systemsState.state);
+            }
+
+            else {
+                this._callingCreate = false;
+                this.setState(initState);
+            }
+
+
         }
 
         this.afterStateCreated();
@@ -177,6 +198,7 @@ class EntityInstance {
                     this.shouldUpdate = false;
 
                     this.setState(newState);
+                    this.shouldUpdate = true;
                 }
             }
             this.entity.didCreate(didCreateParams);
@@ -225,13 +247,24 @@ class EntityInstance {
         }
     }
 
-    update = async () => {
+    update = () => {
+        // shouldUpdate
+        if (has('shouldUpdate', this.entity)) {
+            const shouldUpdateResult = this.entity.shouldUpdate()
+
+            if (typeof shouldUpdateResult === "boolean") {
+                if (!shouldUpdateResult) {
+                    return;
+                }
+            }
+        }
+
         this.shouldUpdate = false;
 
         // willUpdate
         if (has('willUpdate', this.entity)) {
             this._callingWillUpdate = true;
-            await this.entity.willUpdate(this.getEntityParams());
+            this.entity.willUpdate(this.getEntityParams());
             this._callingWillUpdate = false;
         }
 
@@ -239,8 +272,19 @@ class EntityInstance {
         // The update process might be the "pipeline" that I've been thinking of.
         if (has('update', this.entity)) {
             this._callingUpdate = true;
+            const entityParams = this.getEntityParams();
+            // console.log('this.getEntityParams();', this.getEntityParams());
+            let updatedState = this.entity.update({...this.getEntityParams()});
 
-            const updatedState = await this.entity.update(this.getEntityParams());
+            if (has('systems', entityParams.props)) {
+                const systemsParams = updatedState
+                                          ? {...this.getEntityParams(), state: updatedState}
+                                          : this.getEntityParams()
+
+                const newSystemsParams = this.handleSystems('update', systemsParams)
+
+                updatedState = {...updatedState, ...newSystemsParams.state}
+            }
 
             this._callingUpdate = false;
 
@@ -252,7 +296,7 @@ class EntityInstance {
         // didUpdate
         if (has('didUpdate', this.entity)) {
             this._callingDidUpdate = true;
-            await this.entity.didUpdate(this.getEntityParams());
+            this.entity.didUpdate(this.getEntityParams());
             this._callingDidUpdate = false;
         }
 
@@ -273,6 +317,7 @@ class EntityInstance {
                 content.context = childContext;
                 return content;
             });
+            // console.log(newContent)
             this._callingRender = false;
 
             // If entityClassNames are same, then we can assume that this level didn't change.
@@ -280,7 +325,7 @@ class EntityInstance {
             const oldComponentNames = this.childEntities.map(child => child.entityClass.name);
             const newComponentNames = newContent.map(child => child.entityClassName);
 
-            if (isEqual(oldComponentNames, newComponentNames)) {
+            if (equals(oldComponentNames, newComponentNames)) {
                 // No add/remove of components is needed.
                 // Just update Props.
                 const zippedChildren = zip(this.childEntities, newContent);
@@ -292,21 +337,25 @@ class EntityInstance {
                 this.childEntities = generateChildEntities(this.childEntities, newContent);
             }
         }
+
+        this.shouldUpdate = true;
     }
 
     setState = (newState: any) => {
+        // console.log('setState', this.entity)
+        // console.log('ss', this.shouldUpdate);
         if (this._callingWillMount) {
-            console.log('trying to call setState in willMount. This is a noop');
+            console.log('trying to call setState in willMount. This is a noop', this.entity);
             return;
         }
 
         if (this._callingCreate) {
-            console.log('trying to call setState in create(). This is a noop');
+            console.log('trying to call setState in create(). This is a noop', this.entity);
             return;
         }
 
         if (this._callingUpdate) {
-            console.log('trying to call setState in update(). This is a noop. please have the update() method return any updated state.');
+            console.log('trying to call setState in update(). This is a noop. please have the update() method return any updated state.', this.entity);
             return;
         }
 
@@ -325,10 +374,14 @@ class EntityInstance {
         }
     }
 
-    _remove = () => {
+    remove = () => {
         // Figure out if anything needs to happen here.
         if (has('willUnmount', this.entity)) {
-            this.entity.willUnmount();
+            this.entity.willUnmount(this.getEntityParams());
+        }
+
+        if (has('didUnmount', this.entity)) {
+            this.entity.didUnmount(this.getEntityParams())
         }
     }
 
@@ -346,6 +399,20 @@ class EntityInstance {
         }
 
         return entityParams;
+    }
+    //TODO: move this out of class?
+    handleSystems = (methodName, systemParams) => {
+        return systemParams.props.systems.reduce((acc, system, i) => {
+            if (has(methodName, system) && is(Function, system[methodName])) {
+                const systemResult = system[methodName](acc)
+
+                if (is(Object, systemResult)) {
+                    return {...acc, state: {...acc.state, ...systemResult}}
+                }
+            }
+
+            return acc
+        }, systemParams)
     }
 
     get props(): Object {
@@ -365,4 +432,4 @@ class EntityInstance {
     }
 }
 
-export default EntityInstance;
+export default EntityWrapper;

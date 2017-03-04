@@ -16,26 +16,35 @@ class MyEntity extends Entity {
 
 ### Entity methods
 
-When mounting:
+#### General methods:
+
+`getChildContext` -> function that returns an object which will be added to the context that is passed to child entities.
+
+#### When mounting:
 
 `willMount({props, children})`
 
 `create({props, children})`
 - returns state for the entity.
 
-`didCreate({props, state, children})`
+`didCreate({props, state, children, setState})`
+- since `create()` can be async, this method is needed.
 
 `render({props, state, children})`
+
 
 `didMount`
 
 When updating:
 
-`willUpdate({nextProps, props, nextChildren, children, nextState, state})`
+`willUpdate({previousProps, previousChildren, previousState, props, children, state})`
 
 `update()`
 
-`didUpdate({prevProps, prevChildren, prevState, props, children, state})`
+`didUpdate({previousProps, previousChildren, previousState, props, children, state})`
+
+`render()`
+
 
 When being destructed:
 
