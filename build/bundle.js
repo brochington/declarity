@@ -17850,10 +17850,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _regenerator2 = _interopRequireDefault(_regenerator);
 	
-	var _extends2 = __webpack_require__(27);
-	
-	var _extends3 = _interopRequireDefault(_extends2);
-	
 	var _asyncToGenerator2 = __webpack_require__(55);
 	
 	var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
@@ -17865,6 +17861,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _createClass2 = __webpack_require__(4);
 	
 	var _createClass3 = _interopRequireDefault(_createClass2);
+	
+	var _extends2 = __webpack_require__(27);
+	
+	var _extends3 = _interopRequireDefault(_extends2);
 	
 	var _slicedToArray2 = __webpack_require__(90);
 	
@@ -17957,10 +17957,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return childEntity;
 	});
 	
-	var processAddedContent = function processAddedContent(addContent) {
-	    var newEntities = handleRenderContent(addContent);
-	    return mountChildren(newEntities);
-	};
+	var processAddedContent = (0, _ramda.pipe)(handleRenderContent, mountChildren);
 	
 	var processUpdatedContent = (0, _ramda.map)(updateChild);
 	
@@ -17991,6 +17988,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return (0, _functional.onlyObjects)(contentArray);
 	};
 	
+	var callMethodInSystems = function callMethodInSystems(methodName, systemParams) {
+	    return systemParams.props.systems.reduce(function (acc, system, i) {
+	        if ((0, _ramda.has)(methodName, system) && (0, _ramda.is)(Function, system[methodName])) {
+	            var systemResult = system[methodName](acc);
+	
+	            if ((0, _ramda.is)(Object, systemResult)) {
+	                return (0, _extends3.default)({}, acc, { state: (0, _extends3.default)({}, acc.state, systemResult) });
+	            }
+	        }
+	
+	        return acc;
+	    }, systemParams);
+	};
+	
 	var EntityWrapper = function () {
 	    function EntityWrapper(entityClass) {
 	        var _this = this;
@@ -18000,7 +18011,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.mount = function () {
 	            var _ref5 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(props, children) {
 	                var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-	                var passedParams, initState, systemParams, systemsState;
+	                var passedParams, initState, systemParams, systemsState, passedParamsWithState, didCreateParams;
 	                return _regenerator2.default.wrap(function _callee$(_context) {
 	                    while (1) {
 	                        switch (_context.prev = _context.next) {
@@ -18033,7 +18044,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                                    if ((0, _ramda.has)('systems', _this.props)) {
 	                                        systemParams = (0, _extends3.default)({}, passedParams, { state: initState });
-	                                        systemsState = _this.handleSystems('create', systemParams);
+	                                        systemsState = callMethodInSystems('create', systemParams);
 	
 	
 	                                        _this._callingCreate = false;
@@ -18044,9 +18055,72 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                    }
 	                                }
 	
-	                                _this.afterStateCreated();
+	                                _this.shouldUpdate = true;
 	
-	                            case 8:
+	                                passedParamsWithState = {
+	                                    props: _this.props,
+	                                    children: _this.children,
+	                                    state: _this.state,
+	                                    context: _this.context
+	                                };
+	
+	                                // didCreate
+	
+	                                if ((0, _ramda.has)('didCreate', _this.entity)) {
+	                                    didCreateParams = (0, _extends3.default)({}, passedParamsWithState, {
+	                                        setState: function setState(newState) {
+	                                            console.log('didCreate setState', newState);
+	                                            _this.shouldUpdate = false;
+	
+	                                            _this.setState(newState);
+	                                            _this.shouldUpdate = true;
+	                                        }
+	                                    });
+	
+	                                    _this.entity.didCreate(didCreateParams);
+	                                    // handle async stuff here.
+	                                }
+	
+	                                // mount the children
+	                                if ((0, _ramda.has)('render', _this.entity)) {
+	                                    (function () {
+	                                        //TODO: will need to add checks for other values besides <Entity> and null in render array.
+	                                        var childContext = _this.context;
+	
+	                                        _this._callingRender = true;
+	                                        var renderContent = getRenderContent(_this.entity, passedParamsWithState);
+	                                        _this._callingRender = false;
+	
+	                                        if (renderContent && renderContent.length && renderContent.length > 0) {
+	                                            if ((0, _ramda.has)('getChildContext', _this.entity)) {
+	                                                var childContextVal = _this.entity.getChildContext(passedParamsWithState);
+	
+	                                                if (!(0, _ramda.isNil)(childContextVal)) {
+	                                                    childContext = (0, _extends3.default)({}, childContext, childContextVal);
+	                                                }
+	
+	                                                renderContent = renderContent.map(function (content) {
+	                                                    content.context = childContext;
+	                                                    return content;
+	                                                });
+	                                            }
+	
+	                                            _this.childEntities = handleRenderContent(renderContent);
+	
+	                                            // mount children
+	                                            _this.childEntities.map(function (childEntity) {
+	                                                childEntity.entityInstance.mount(childEntity.props, childEntity.children, childContext);
+	                                            });
+	                                        }
+	                                    })();
+	                                }
+	
+	                                // didMount
+	                                if ((0, _ramda.has)('didMount', _this.entity)) {
+	                                    _this.entity.didMount(passedParamsWithState);
+	                                }
+	
+	                            case 12:
 	                            case 'end':
 	                                return _context.stop();
 	                        }
@@ -18058,71 +18132,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return _ref5.apply(this, arguments);
 	            };
 	        }();
-	
-	        this.afterStateCreated = function (state) {
-	            _this.shouldUpdate = true;
-	
-	            var passedParamsWithState = {
-	                props: _this.props,
-	                children: _this.children,
-	                state: _this.state,
-	                context: _this.context
-	            };
-	
-	            // didCreate
-	            if ((0, _ramda.has)('didCreate', _this.entity)) {
-	                var didCreateParams = (0, _extends3.default)({}, passedParamsWithState, {
-	                    setState: function setState(newState) {
-	                        console.log('didCreate setState', newState);
-	                        _this.shouldUpdate = false;
-	
-	                        _this.setState(newState);
-	                        _this.shouldUpdate = true;
-	                    }
-	                });
-	                _this.entity.didCreate(didCreateParams);
-	                // handle async stuff here.
-	            }
-	
-	            // mount the children
-	            if ((0, _ramda.has)('render', _this.entity)) {
-	                (function () {
-	                    //TODO: will need to add checks for other values besides <Entity> and null in render array.
-	                    var childContext = _this.context;
-	
-	                    _this._callingRender = true;
-	                    var renderContent = getRenderContent(_this.entity, passedParamsWithState);
-	                    _this._callingRender = false;
-	
-	                    if (renderContent && renderContent.length && renderContent.length > 0) {
-	                        if ((0, _ramda.has)('getChildContext', _this.entity)) {
-	                            var childContextVal = _this.entity.getChildContext(passedParamsWithState);
-	
-	                            if (!(0, _ramda.isNil)(childContextVal)) {
-	                                childContext = (0, _extends3.default)({}, childContext, childContextVal);
-	                            }
-	
-	                            renderContent = renderContent.map(function (content) {
-	                                content.context = childContext;
-	                                return content;
-	                            });
-	                        }
-	
-	                        _this.childEntities = handleRenderContent(renderContent);
-	
-	                        // mount children
-	                        _this.childEntities.map(function (childEntity) {
-	                            childEntity.entityInstance.mount(childEntity.props, childEntity.children, childContext);
-	                        });
-	                    }
-	                })();
-	            }
-	
-	            // didMount
-	            if ((0, _ramda.has)('didMount', _this.entity)) {
-	                _this.entity.didMount(passedParamsWithState);
-	            }
-	        };
 	
 	        this.update = function () {
 	            // shouldUpdate
@@ -18150,13 +18159,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if ((0, _ramda.has)('update', _this.entity)) {
 	                _this._callingUpdate = true;
 	                var entityParams = _this.getEntityParams();
-	                // console.log('this.getEntityParams();', this.getEntityParams());
+	
 	                var updatedState = _this.entity.update((0, _extends3.default)({}, _this.getEntityParams()));
 	
 	                if ((0, _ramda.has)('systems', entityParams.props)) {
 	                    var systemsParams = updatedState ? (0, _extends3.default)({}, _this.getEntityParams(), { state: updatedState }) : _this.getEntityParams();
 	
-	                    var newSystemsParams = _this.handleSystems('update', systemsParams);
+	                    var newSystemsParams = callMethodInSystems('update', systemsParams);
 	
 	                    updatedState = (0, _extends3.default)({}, updatedState, newSystemsParams.state);
 	                }
@@ -18277,28 +18286,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return entityParams;
 	        };
 	
-	        this.handleSystems = function (methodName, systemParams) {
-	            return systemParams.props.systems.reduce(function (acc, system, i) {
-	                if ((0, _ramda.has)(methodName, system) && (0, _ramda.is)(Function, system[methodName])) {
-	                    var systemResult = system[methodName](acc);
-	
-	                    if ((0, _ramda.is)(Object, systemResult)) {
-	                        return (0, _extends3.default)({}, acc, { state: (0, _extends3.default)({}, acc.state, systemResult) });
-	                    }
-	                }
-	
-	                return acc;
-	            }, systemParams);
-	        };
-	
-	        // console.log(entityClass instanceof Object)
 	        this.entityClass = entityClass;
 	        this.entity = new entityClass();
 	    }
-	    // TODO: merge this in with mount()
-	
-	    //TODO: move this out of class?
-	
 	
 	    (0, _createClass3.default)(EntityWrapper, [{
 	        key: 'props',

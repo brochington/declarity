@@ -95,10 +95,7 @@ const mountChildren = map((childEntity) => {
     return childEntity;
 });
 
-const processAddedContent = (addContent) => {
-    const newEntities = handleRenderContent(addContent);
-    return mountChildren(newEntities);
-}
+const processAddedContent = pipe(handleRenderContent, mountChildren)
 
 const processUpdatedContent = map(updateChild);
 
@@ -127,9 +124,22 @@ const getRenderContent = (entity, params) => {
     return onlyObjects(contentArray);
 }
 
+const callMethodInSystems = (methodName, systemParams) => {
+    return systemParams.props.systems.reduce((acc, system, i) => {
+        if (has(methodName, system) && is(Function, system[methodName])) {
+            const systemResult = system[methodName](acc)
+
+            if (is(Object, systemResult)) {
+                return {...acc, state: {...acc.state, ...systemResult}}
+            }
+        }
+
+        return acc
+    }, systemParams)
+}
+
 class EntityWrapper {
     constructor(entityClass) {
-        // console.log(entityClass instanceof Object)
         this.entityClass = entityClass;
         this.entity = new entityClass();
     }
@@ -162,7 +172,7 @@ class EntityWrapper {
             if (has('systems', this.props)) {
                 const systemParams = {...passedParams, state: initState};
 
-                const systemsState = this.handleSystems('create', systemParams);
+                const systemsState = callMethodInSystems('create', systemParams);
 
                 this._callingCreate = false;
                 this.setState(systemsState.state);
@@ -176,10 +186,6 @@ class EntityWrapper {
 
         }
 
-        this.afterStateCreated();
-    }
-    // TODO: merge this in with mount()
-    afterStateCreated = (state) => {
         this.shouldUpdate = true;
 
         const passedParamsWithState = {
@@ -273,7 +279,7 @@ class EntityWrapper {
         if (has('update', this.entity)) {
             this._callingUpdate = true;
             const entityParams = this.getEntityParams();
-            // console.log('this.getEntityParams();', this.getEntityParams());
+
             let updatedState = this.entity.update({...this.getEntityParams()});
 
             if (has('systems', entityParams.props)) {
@@ -281,7 +287,7 @@ class EntityWrapper {
                                           ? {...this.getEntityParams(), state: updatedState}
                                           : this.getEntityParams()
 
-                const newSystemsParams = this.handleSystems('update', systemsParams)
+                const newSystemsParams = callMethodInSystems('update', systemsParams)
 
                 updatedState = {...updatedState, ...newSystemsParams.state}
             }
@@ -399,20 +405,6 @@ class EntityWrapper {
         }
 
         return entityParams;
-    }
-    //TODO: move this out of class?
-    handleSystems = (methodName, systemParams) => {
-        return systemParams.props.systems.reduce((acc, system, i) => {
-            if (has(methodName, system) && is(Function, system[methodName])) {
-                const systemResult = system[methodName](acc)
-
-                if (is(Object, systemResult)) {
-                    return {...acc, state: {...acc.state, ...systemResult}}
-                }
-            }
-
-            return acc
-        }, systemParams)
     }
 
     get props(): Object {
