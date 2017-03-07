@@ -20,123 +20,14 @@ import {
     isArray
 } from './helpers/functional';
 
-const createEntityInstanceObjects = map(({entityClass, props, children, context}) => {
-    const entityInstance = new EntityWrapper(entityClass);
-
-    return {
-        entityClass,
-        props,
-        key: props.key,
-        children,
-        entityInstance,
-        entityClassName: entityClass.name,
-        context
-    }
-});
-
-const handleRenderContent = pipe(
-    rejectNil,
-    createEntityInstanceObjects
-);
-
-const diffComponents = (oldContent, newContent) => {
-    const newHashMap = contentByKey(newContent);
-    const oldHashMap = contentByKey(oldContent);
-
-    const added = reduce((acc, c) => {
-        if (!has(c.key, oldHashMap)) {
-            acc.push(c)
-        }
-        return acc;
-    }, [], newContent);
-
-    const updated = reduce((acc, c) => {
-        if (has(c.key, newHashMap)) {
-            acc.push([c, newHashMap[c.key]]);
-        }
-        return acc;
-    }, [], oldContent);
-
-    const removed = reduce((acc, c) => {
-        if (!has(c.key, newHashMap)) {
-            acc.push(c);
-        }
-        return acc;
-    }, [], oldContent);
-
-    return {
-        added,
-        updated,
-        removed
-    }
-}
-
-const updateChild = ([oldChild, newChild]) => {
-    const newProps = isNil(newChild.props) ? {} : newChild.props;
-    const newChildren = isArray(newChild.children) ? flatten(newChild.children) : [];
-    const newContext = isNil(newChild.context) ? {} : newChild.context;
-
-    oldChild.entityInstance.previousProps = oldChild.props;
-    oldChild.entityInstance.props = newProps;
-
-    oldChild.entityInstance.previousChildren = oldChild.children;
-    oldChild.entityInstance.children = newChildren;
-
-    oldChild.entityInstance.previousContext = oldChild.context;
-    oldChild.entityInstance.context = newContext;
-
-    oldChild.entityInstance.update();
-
-    return oldChild;
-}
-
-const mountChildren = map((childEntity) => {
-    childEntity.entityInstance.mount(childEntity.props, childEntity.children, childEntity.context);
-    return childEntity;
-});
-
-const processAddedContent = pipe(handleRenderContent, mountChildren)
-
-const processUpdatedContent = map(updateChild);
-
-const processRemovedContent = map(({entityInstance}) => entityInstance.remove())
-
-const generateChildEntities = (oldContent, newContent) => {
-    const {added, updated, removed} = diffComponents(oldContent, newContent);
-
-    const addedEntities = processAddedContent(added);
-    const updatedEntities = processUpdatedContent(updated);
-    removed.length > 0 && processRemovedContent(removed);
-
-    return addedEntities.concat(updatedEntities)
-}
-
-const getRenderContent = (entity, params) => {
-    const content = entity.render(params);
-    if (isNil(content)) return [];
-
-    const contentArray = isArray(content)
-                            ? content
-                            : has('key', content)
-                                ? [content]
-                                : [];
-
-    return onlyObjects(contentArray);
-}
-
-const callMethodInSystems = (methodName, systemParams) => {
-    return systemParams.props.systems.reduce((acc, system, i) => {
-        if (has(methodName, system) && is(Function, system[methodName])) {
-            const systemResult = system[methodName](acc)
-
-            if (is(Object, systemResult)) {
-                return {...acc, state: {...acc.state, ...systemResult}}
-            }
-        }
-
-        return acc
-    }, systemParams)
-}
+import {
+    callMethodInSystems,
+    generateChildEntities,
+    getRenderContent,
+    mountChildren,
+    updateChildren,
+    removeChildren
+} from './helpers/entityInstance'
 
 class EntityWrapper {
     constructor(entityClass) {
@@ -231,18 +122,14 @@ class EntityWrapper {
                         }
                     }
 
-                    renderContent = renderContent.map(content => {
-                        content.context = childContext
-                        return content;
-                    })
                 }
 
-                this.childEntities = handleRenderContent(renderContent);
+                renderContent = renderContent.map(content => {
+                    content.context = childContext
+                    return content;
+                })
 
-                // mount children
-                this.childEntities.map((childEntity) => {
-                    childEntity.entityInstance.mount(childEntity.props, childEntity.children, childContext);
-                });
+                this.childEntities = mountChildren(renderContent)
             }
 
         }
@@ -334,9 +221,11 @@ class EntityWrapper {
             if (equals(oldComponentNames, newComponentNames)) {
                 // No add/remove of components is needed.
                 // Just update Props.
-                const zippedChildren = zip(this.childEntities, newContent);
 
-                this.childEntities = map(updateChild, zippedChildren);
+                this.childEntities = pipe(
+                    zip(this.childEntities),
+                    updateChildren
+                )(newContent)
             }
 
             else {
@@ -348,8 +237,6 @@ class EntityWrapper {
     }
 
     setState = (newState: any) => {
-        // console.log('setState', this.entity)
-        // console.log('ss', this.shouldUpdate);
         if (this._callingWillMount) {
             console.log('trying to call setState in willMount. This is a noop', this.entity);
             return;
@@ -384,6 +271,10 @@ class EntityWrapper {
         // Figure out if anything needs to happen here.
         if (has('willUnmount', this.entity)) {
             this.entity.willUnmount(this.getEntityParams());
+        }
+
+        if (has('render', this.entity)) {
+            removeChildren(this.childEntities)
         }
 
         if (has('didUnmount', this.entity)) {

@@ -17850,6 +17850,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _regenerator2 = _interopRequireDefault(_regenerator);
 	
+	var _extends2 = __webpack_require__(27);
+	
+	var _extends3 = _interopRequireDefault(_extends2);
+	
 	var _asyncToGenerator2 = __webpack_require__(55);
 	
 	var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
@@ -17862,145 +17866,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass3 = _interopRequireDefault(_createClass2);
 	
-	var _extends2 = __webpack_require__(27);
-	
-	var _extends3 = _interopRequireDefault(_extends2);
-	
-	var _slicedToArray2 = __webpack_require__(90);
-	
-	var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
-	
 	var _ramda = __webpack_require__(97);
 	
 	var _functional = __webpack_require__(98);
 	
+	var _entityInstance = __webpack_require__(101);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	var createEntityInstanceObjects = (0, _ramda.map)(function (_ref) {
-	    var entityClass = _ref.entityClass,
-	        props = _ref.props,
-	        children = _ref.children,
-	        context = _ref.context;
-	
-	    var entityInstance = new EntityWrapper(entityClass);
-	
-	    return {
-	        entityClass: entityClass,
-	        props: props,
-	        key: props.key,
-	        children: children,
-	        entityInstance: entityInstance,
-	        entityClassName: entityClass.name,
-	        context: context
-	    };
-	});
-	
-	var handleRenderContent = (0, _ramda.pipe)(_functional.rejectNil, createEntityInstanceObjects);
-	
-	var diffComponents = function diffComponents(oldContent, newContent) {
-	    var newHashMap = (0, _functional.contentByKey)(newContent);
-	    var oldHashMap = (0, _functional.contentByKey)(oldContent);
-	
-	    var added = (0, _ramda.reduce)(function (acc, c) {
-	        if (!(0, _ramda.has)(c.key, oldHashMap)) {
-	            acc.push(c);
-	        }
-	        return acc;
-	    }, [], newContent);
-	
-	    var updated = (0, _ramda.reduce)(function (acc, c) {
-	        if ((0, _ramda.has)(c.key, newHashMap)) {
-	            acc.push([c, newHashMap[c.key]]);
-	        }
-	        return acc;
-	    }, [], oldContent);
-	
-	    var removed = (0, _ramda.reduce)(function (acc, c) {
-	        if (!(0, _ramda.has)(c.key, newHashMap)) {
-	            acc.push(c);
-	        }
-	        return acc;
-	    }, [], oldContent);
-	
-	    return {
-	        added: added,
-	        updated: updated,
-	        removed: removed
-	    };
-	};
-	
-	var updateChild = function updateChild(_ref2) {
-	    var _ref3 = (0, _slicedToArray3.default)(_ref2, 2),
-	        oldChild = _ref3[0],
-	        newChild = _ref3[1];
-	
-	    var newProps = (0, _ramda.isNil)(newChild.props) ? {} : newChild.props;
-	    var newChildren = (0, _functional.isArray)(newChild.children) ? (0, _ramda.flatten)(newChild.children) : [];
-	    var newContext = (0, _ramda.isNil)(newChild.context) ? {} : newChild.context;
-	
-	    oldChild.entityInstance.previousProps = oldChild.props;
-	    oldChild.entityInstance.props = newProps;
-	
-	    oldChild.entityInstance.previousChildren = oldChild.children;
-	    oldChild.entityInstance.children = newChildren;
-	
-	    oldChild.entityInstance.previousContext = oldChild.context;
-	    oldChild.entityInstance.context = newContext;
-	
-	    oldChild.entityInstance.update();
-	
-	    return oldChild;
-	};
-	
-	var mountChildren = (0, _ramda.map)(function (childEntity) {
-	    childEntity.entityInstance.mount(childEntity.props, childEntity.children, childEntity.context);
-	    return childEntity;
-	});
-	
-	var processAddedContent = (0, _ramda.pipe)(handleRenderContent, mountChildren);
-	
-	var processUpdatedContent = (0, _ramda.map)(updateChild);
-	
-	var processRemovedContent = (0, _ramda.map)(function (_ref4) {
-	    var entityInstance = _ref4.entityInstance;
-	    return entityInstance.remove();
-	});
-	
-	var generateChildEntities = function generateChildEntities(oldContent, newContent) {
-	    var _diffComponents = diffComponents(oldContent, newContent),
-	        added = _diffComponents.added,
-	        updated = _diffComponents.updated,
-	        removed = _diffComponents.removed;
-	
-	    var addedEntities = processAddedContent(added);
-	    var updatedEntities = processUpdatedContent(updated);
-	    removed.length > 0 && processRemovedContent(removed);
-	
-	    return addedEntities.concat(updatedEntities);
-	};
-	
-	var getRenderContent = function getRenderContent(entity, params) {
-	    var content = entity.render(params);
-	    if ((0, _ramda.isNil)(content)) return [];
-	
-	    var contentArray = (0, _functional.isArray)(content) ? content : (0, _ramda.has)('key', content) ? [content] : [];
-	
-	    return (0, _functional.onlyObjects)(contentArray);
-	};
-	
-	var callMethodInSystems = function callMethodInSystems(methodName, systemParams) {
-	    return systemParams.props.systems.reduce(function (acc, system, i) {
-	        if ((0, _ramda.has)(methodName, system) && (0, _ramda.is)(Function, system[methodName])) {
-	            var systemResult = system[methodName](acc);
-	
-	            if ((0, _ramda.is)(Object, systemResult)) {
-	                return (0, _extends3.default)({}, acc, { state: (0, _extends3.default)({}, acc.state, systemResult) });
-	            }
-	        }
-	
-	        return acc;
-	    }, systemParams);
-	};
 	
 	var EntityWrapper = function () {
 	    function EntityWrapper(entityClass) {
@@ -18009,7 +17881,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        (0, _classCallCheck3.default)(this, EntityWrapper);
 	
 	        this.mount = function () {
-	            var _ref5 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(props, children) {
+	            var _ref = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(props, children) {
 	                var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 	                var passedParams, initState, systemParams, systemsState, passedParamsWithState, didCreateParams;
 	                return _regenerator2.default.wrap(function _callee$(_context) {
@@ -18044,7 +17916,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                                    if ((0, _ramda.has)('systems', _this.props)) {
 	                                        systemParams = (0, _extends3.default)({}, passedParams, { state: initState });
-	                                        systemsState = callMethodInSystems('create', systemParams);
+	                                        systemsState = (0, _entityInstance.callMethodInSystems)('create', systemParams);
 	
 	
 	                                        _this._callingCreate = false;
@@ -18088,7 +17960,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                        var childContext = _this.context;
 	
 	                                        _this._callingRender = true;
-	                                        var renderContent = getRenderContent(_this.entity, passedParamsWithState);
+	                                        var renderContent = (0, _entityInstance.getRenderContent)(_this.entity, passedParamsWithState);
 	                                        _this._callingRender = false;
 	
 	                                        if (renderContent && renderContent.length && renderContent.length > 0) {
@@ -18098,19 +17970,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                                if (!(0, _ramda.isNil)(childContextVal)) {
 	                                                    childContext = (0, _extends3.default)({}, childContext, childContextVal);
 	                                                }
-	
-	                                                renderContent = renderContent.map(function (content) {
-	                                                    content.context = childContext;
-	                                                    return content;
-	                                                });
 	                                            }
 	
-	                                            _this.childEntities = handleRenderContent(renderContent);
-	
-	                                            // mount children
-	                                            _this.childEntities.map(function (childEntity) {
-	                                                childEntity.entityInstance.mount(childEntity.props, childEntity.children, childContext);
+	                                            renderContent = renderContent.map(function (content) {
+	                                                content.context = childContext;
+	                                                return content;
 	                                            });
+	
+	                                            _this.childEntities = (0, _entityInstance.mountChildren)(renderContent);
 	                                        }
 	                                    })();
 	                                }
@@ -18129,7 +17996,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }));
 	
 	            return function (_x, _x2, _x3) {
-	                return _ref5.apply(this, arguments);
+	                return _ref.apply(this, arguments);
 	            };
 	        }();
 	
@@ -18165,7 +18032,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if ((0, _ramda.has)('systems', entityParams.props)) {
 	                    var systemsParams = updatedState ? (0, _extends3.default)({}, _this.getEntityParams(), { state: updatedState }) : _this.getEntityParams();
 	
-	                    var newSystemsParams = callMethodInSystems('update', systemsParams);
+	                    var newSystemsParams = (0, _entityInstance.callMethodInSystems)('update', systemsParams);
 	
 	                    updatedState = (0, _extends3.default)({}, updatedState, newSystemsParams.state);
 	                }
@@ -18198,7 +18065,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	
 	                    _this._callingRender = true;
-	                    var newContent = getRenderContent(_this.entity, _this.getEntityParams()).map(function (content) {
+	                    var newContent = (0, _entityInstance.getRenderContent)(_this.entity, _this.getEntityParams()).map(function (content) {
 	                        content.context = childContext;
 	                        return content;
 	                    });
@@ -18217,11 +18084,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    if ((0, _ramda.equals)(oldComponentNames, newComponentNames)) {
 	                        // No add/remove of components is needed.
 	                        // Just update Props.
-	                        var zippedChildren = (0, _ramda.zip)(_this.childEntities, newContent);
 	
-	                        _this.childEntities = (0, _ramda.map)(updateChild, zippedChildren);
+	                        _this.childEntities = (0, _ramda.pipe)((0, _ramda.zip)(_this.childEntities), _entityInstance.updateChildren)(newContent);
 	                    } else {
-	                        _this.childEntities = generateChildEntities(_this.childEntities, newContent);
+	                        _this.childEntities = (0, _entityInstance.generateChildEntities)(_this.childEntities, newContent);
 	                    }
 	                })();
 	            }
@@ -18230,8 +18096,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	
 	        this.setState = function (newState) {
-	            // console.log('setState', this.entity)
-	            // console.log('ss', this.shouldUpdate);
 	            if (_this._callingWillMount) {
 	                console.log('trying to call setState in willMount. This is a noop', _this.entity);
 	                return;
@@ -18263,6 +18127,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            // Figure out if anything needs to happen here.
 	            if ((0, _ramda.has)('willUnmount', _this.entity)) {
 	                _this.entity.willUnmount(_this.getEntityParams());
+	            }
+	
+	            if ((0, _ramda.has)('render', _this.entity)) {
+	                (0, _entityInstance.removeChildren)(_this.childEntities);
 	            }
 	
 	            if ((0, _ramda.has)('didUnmount', _this.entity)) {
@@ -29293,6 +29161,157 @@ return /******/ (function(modules) { // webpackBootstrap
 	        key: props && props.key ? props.key : entityClass.name + '-no-key',
 	        children: children
 	    };
+	};
+
+/***/ },
+/* 101 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.callMethodInSystems = exports.getRenderContent = exports.generateChildEntities = exports.removeChildren = exports.updateChildren = exports.mountChildren = exports.removeChild = exports.updateChild = exports.mountChild = exports.diffComponents = undefined;
+	
+	var _extends2 = __webpack_require__(27);
+	
+	var _extends3 = _interopRequireDefault(_extends2);
+	
+	var _slicedToArray2 = __webpack_require__(90);
+	
+	var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
+	
+	var _ramda = __webpack_require__(97);
+	
+	var _functional = __webpack_require__(98);
+	
+	var _EntityWrapper = __webpack_require__(50);
+	
+	var _EntityWrapper2 = _interopRequireDefault(_EntityWrapper);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	var diffComponents = exports.diffComponents = function diffComponents(oldContent, newContent) {
+	    var newHashMap = (0, _functional.contentByKey)(newContent);
+	    var oldHashMap = (0, _functional.contentByKey)(oldContent);
+	
+	    var added = (0, _ramda.reduce)(function (acc, c) {
+	        if (!(0, _ramda.has)(c.key, oldHashMap)) {
+	            acc.push(c);
+	        }
+	        return acc;
+	    }, [], newContent);
+	
+	    var updated = (0, _ramda.reduce)(function (acc, c) {
+	        if ((0, _ramda.has)(c.key, newHashMap)) {
+	            acc.push([c, newHashMap[c.key]]);
+	        }
+	        return acc;
+	    }, [], oldContent);
+	
+	    var removed = (0, _ramda.reduce)(function (acc, c) {
+	        if (!(0, _ramda.has)(c.key, newHashMap)) {
+	            acc.push(c);
+	        }
+	        return acc;
+	    }, [], oldContent);
+	
+	    return {
+	        added: added,
+	        updated: updated,
+	        removed: removed
+	    };
+	};
+	
+	var mountChild = exports.mountChild = function mountChild(childEntity) {
+	    childEntity.entityInstance.mount(childEntity.props, childEntity.children, childEntity.context);
+	    return childEntity;
+	};
+	
+	var updateChild = exports.updateChild = function updateChild(_ref) {
+	    var _ref2 = (0, _slicedToArray3.default)(_ref, 2),
+	        oldChild = _ref2[0],
+	        newChild = _ref2[1];
+	
+	    var newProps = (0, _ramda.isNil)(newChild.props) ? {} : newChild.props;
+	    var newChildren = (0, _functional.isArray)(newChild.children) ? (0, _ramda.flatten)(newChild.children) : [];
+	    var newContext = (0, _ramda.isNil)(newChild.context) ? {} : newChild.context;
+	
+	    oldChild.entityInstance.previousProps = oldChild.props;
+	    oldChild.entityInstance.props = newProps;
+	
+	    oldChild.entityInstance.previousChildren = oldChild.children;
+	    oldChild.entityInstance.children = newChildren;
+	
+	    oldChild.entityInstance.previousContext = oldChild.context;
+	    oldChild.entityInstance.context = newContext;
+	
+	    oldChild.entityInstance.update();
+	
+	    return oldChild;
+	};
+	
+	var removeChild = exports.removeChild = function removeChild(_ref3) {
+	    var entityInstance = _ref3.entityInstance;
+	    return entityInstance.remove();
+	};
+	
+	var mountChildren = exports.mountChildren = (0, _ramda.pipe)(_functional.rejectNil, (0, _ramda.map)(function (_ref4) {
+	    var entityClass = _ref4.entityClass,
+	        props = _ref4.props,
+	        children = _ref4.children,
+	        context = _ref4.context;
+	
+	    return {
+	        entityClass: entityClass,
+	        props: props,
+	        key: props.key,
+	        children: children,
+	        entityInstance: new _EntityWrapper2.default(entityClass),
+	        entityClassName: entityClass.name,
+	        context: context
+	    };
+	}), (0, _ramda.map)(mountChild));
+	
+	var updateChildren = exports.updateChildren = (0, _ramda.map)(updateChild);
+	
+	var removeChildren = exports.removeChildren = (0, _ramda.map)(removeChild);
+	
+	var generateChildEntities = exports.generateChildEntities = function generateChildEntities(oldContent, newContent) {
+	    var _diffComponents = diffComponents(oldContent, newContent),
+	        added = _diffComponents.added,
+	        updated = _diffComponents.updated,
+	        removed = _diffComponents.removed;
+	
+	    var addedEntities = mountChildren(added);
+	    var updatedEntities = updateChildren(updated);
+	    removed.length > 0 && removeChildren(removed);
+	
+	    return addedEntities.concat(updatedEntities);
+	};
+	
+	var getRenderContent = exports.getRenderContent = function getRenderContent(entity, params) {
+	    var content = entity.render(params);
+	    if ((0, _ramda.isNil)(content)) return [];
+	
+	    var contentArray = (0, _functional.isArray)(content) ? content : (0, _ramda.has)('key', content) ? [content] : [];
+	
+	    return (0, _functional.onlyObjects)(contentArray);
+	};
+	
+	var callMethodInSystems = exports.callMethodInSystems = function callMethodInSystems(methodName, systemParams) {
+	    return systemParams.props.systems.reduce(function (acc, system, i) {
+	        if ((0, _ramda.has)(methodName, system) && (0, _ramda.is)(Function, system[methodName])) {
+	            var systemResult = system[methodName](acc);
+	
+	            if ((0, _ramda.is)(Object, systemResult)) {
+	                return (0, _extends3.default)({}, acc, { state: (0, _extends3.default)({}, acc.state, systemResult) });
+	            }
+	        }
+	
+	        return acc;
+	    }, systemParams);
 	};
 
 /***/ }
