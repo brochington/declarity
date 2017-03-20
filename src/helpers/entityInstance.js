@@ -111,8 +111,9 @@ export const generateChildEntities = (oldContent, newContent) => {
 }
 
 export const getRenderContent = (entity, params) => {
-    const content = entity.render(params);
-    if (isNil(content)) return [];
+    if (!has('render', entity)) return []
+    const content = entity.render(params)
+    if (isNil(content)) return []
 
     const contentArray = isArray(content)
                             ? content

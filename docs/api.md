@@ -64,3 +64,7 @@ import App from 'App'
 
 register(<App />)
 ```
+
+## Params
+
+methods: getParams, setState

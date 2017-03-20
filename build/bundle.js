@@ -17866,11 +17866,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass3 = _interopRequireDefault(_createClass2);
 	
-	var _ramda = __webpack_require__(97);
+	var _ramda = __webpack_require__(90);
 	
-	var _functional = __webpack_require__(98);
+	var _functional = __webpack_require__(91);
 	
-	var _entityInstance = __webpack_require__(101);
+	var _entityInstance = __webpack_require__(92);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -17897,7 +17897,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                    props: props,
 	                                    children: children,
 	                                    context: context,
-	                                    setState: _this.setState
+	                                    setState: _this.setState,
+	                                    getParams: _this.getEntityParams
 	                                };
 	
 	                                // willMount
@@ -17978,10 +17979,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                            });
 	
 	                                            _this.childEntities = (0, _entityInstance.mountChildren)(renderContent);
+	                                        } else {
+	                                            _this.childEntities = [];
 	                                        }
 	                                    })();
+	                                } else {
+	                                    _this.childEntities = [];
 	                                }
-	
+	                                // console.log('this.childEntities!!', this.childEntities, this.entity)
 	                                // didMount
 	                                if ((0, _ramda.has)('didMount', _this.entity)) {
 	                                    _this.entity.didMount(passedParamsWithState);
@@ -18051,7 +18056,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                _this._callingDidUpdate = false;
 	            }
 	
-	            if (_this.childEntities) {
+	            var newRenderContent = (0, _entityInstance.getRenderContent)(_this.entity, _this.getEntityParams());
+	
+	            if (_this.childEntities || newRenderContent) {
 	                (function () {
 	                    // get new rendered children.
 	
@@ -18065,7 +18072,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	
 	                    _this._callingRender = true;
-	                    var newContent = (0, _entityInstance.getRenderContent)(_this.entity, _this.getEntityParams()).map(function (content) {
+	                    var newContent = newRenderContent.map(function (content) {
 	                        content.context = childContext;
 	                        return content;
 	                    });
@@ -18148,7 +18155,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                children: _this.children,
 	                context: _this.context,
 	                state: _this.state,
-	                setState: _this.setState
+	                setState: _this.setState,
+	                getParams: _this.getEntityParams
 	            };
 	
 	            return entityParams;
@@ -20156,116 +20164,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 90 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	
-	exports.__esModule = true;
-	
-	var _isIterable2 = __webpack_require__(91);
-	
-	var _isIterable3 = _interopRequireDefault(_isIterable2);
-	
-	var _getIterator2 = __webpack_require__(94);
-	
-	var _getIterator3 = _interopRequireDefault(_getIterator2);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	exports.default = function () {
-	  function sliceIterator(arr, i) {
-	    var _arr = [];
-	    var _n = true;
-	    var _d = false;
-	    var _e = undefined;
-	
-	    try {
-	      for (var _i = (0, _getIterator3.default)(arr), _s; !(_n = (_s = _i.next()).done); _n = true) {
-	        _arr.push(_s.value);
-	
-	        if (i && _arr.length === i) break;
-	      }
-	    } catch (err) {
-	      _d = true;
-	      _e = err;
-	    } finally {
-	      try {
-	        if (!_n && _i["return"]) _i["return"]();
-	      } finally {
-	        if (_d) throw _e;
-	      }
-	    }
-	
-	    return _arr;
-	  }
-	
-	  return function (arr, i) {
-	    if (Array.isArray(arr)) {
-	      return arr;
-	    } else if ((0, _isIterable3.default)(Object(arr))) {
-	      return sliceIterator(arr, i);
-	    } else {
-	      throw new TypeError("Invalid attempt to destructure non-iterable instance");
-	    }
-	  };
-	}();
-
-/***/ },
-/* 91 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = { "default": __webpack_require__(92), __esModule: true };
-
-/***/ },
-/* 92 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(72);
-	__webpack_require__(59);
-	module.exports = __webpack_require__(93);
-
-/***/ },
-/* 93 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var classof   = __webpack_require__(77)
-	  , ITERATOR  = __webpack_require__(70)('iterator')
-	  , Iterators = __webpack_require__(64);
-	module.exports = __webpack_require__(10).isIterable = function(it){
-	  var O = Object(it);
-	  return O[ITERATOR] !== undefined
-	    || '@@iterator' in O
-	    || Iterators.hasOwnProperty(classof(O));
-	};
-
-/***/ },
-/* 94 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = { "default": __webpack_require__(95), __esModule: true };
-
-/***/ },
-/* 95 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(72);
-	__webpack_require__(59);
-	module.exports = __webpack_require__(96);
-
-/***/ },
-/* 96 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var anObject = __webpack_require__(15)
-	  , get      = __webpack_require__(82);
-	module.exports = __webpack_require__(10).getIterator = function(it){
-	  var iterFn = get(it);
-	  if(typeof iterFn != 'function')throw TypeError(it + ' is not iterable!');
-	  return anObject(iterFn.call(it));
-	};
-
-/***/ },
-/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//  Ramda v0.22.1
@@ -29102,7 +29000,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 98 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29112,7 +29010,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 	exports.onlyObjects = exports.isArray = exports.isObject = exports.contentByKey = exports.rejectNil = undefined;
 	
-	var _ramda = __webpack_require__(97);
+	var _ramda = __webpack_require__(90);
 	
 	var rejectNil = exports.rejectNil = (0, _ramda.reject)(_ramda.isNil);
 	
@@ -29133,38 +29031,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var onlyObjects = exports.onlyObjects = (0, _ramda.filter)(isObject);
 
 /***/ },
-/* 99 */,
-/* 100 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	var createEntity = exports.createEntity = function createEntity(entityClass, props) {
-	    for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-	        children[_key - 2] = arguments[_key];
-	    }
-	
-	    // TODO: Do better error handling!
-	    // TODO: is there a way to not have keys on every entity, or to infer them?
-	    //
-	    // if (!props || !has('key', props)) {
-	    //     console.error('Entity does not has key prop: ', entityClass.name, props);
-	    // }
-	
-	    return {
-	        entityClass: entityClass,
-	        entityClassName: entityClass.name,
-	        props: props,
-	        key: props && props.key ? props.key : entityClass.name + '-no-key',
-	        children: children
-	    };
-	};
-
-/***/ },
-/* 101 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29178,13 +29045,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _extends3 = _interopRequireDefault(_extends2);
 	
-	var _slicedToArray2 = __webpack_require__(90);
+	var _slicedToArray2 = __webpack_require__(93);
 	
 	var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
 	
-	var _ramda = __webpack_require__(97);
+	var _ramda = __webpack_require__(90);
 	
-	var _functional = __webpack_require__(98);
+	var _functional = __webpack_require__(91);
 	
 	var _EntityWrapper = __webpack_require__(50);
 	
@@ -29292,6 +29159,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	var getRenderContent = exports.getRenderContent = function getRenderContent(entity, params) {
+	    if (!(0, _ramda.has)('render', entity)) return [];
 	    var content = entity.render(params);
 	    if ((0, _ramda.isNil)(content)) return [];
 	
@@ -29312,6 +29180,146 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        return acc;
 	    }, systemParams);
+	};
+
+/***/ },
+/* 93 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	exports.__esModule = true;
+	
+	var _isIterable2 = __webpack_require__(94);
+	
+	var _isIterable3 = _interopRequireDefault(_isIterable2);
+	
+	var _getIterator2 = __webpack_require__(97);
+	
+	var _getIterator3 = _interopRequireDefault(_getIterator2);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	exports.default = function () {
+	  function sliceIterator(arr, i) {
+	    var _arr = [];
+	    var _n = true;
+	    var _d = false;
+	    var _e = undefined;
+	
+	    try {
+	      for (var _i = (0, _getIterator3.default)(arr), _s; !(_n = (_s = _i.next()).done); _n = true) {
+	        _arr.push(_s.value);
+	
+	        if (i && _arr.length === i) break;
+	      }
+	    } catch (err) {
+	      _d = true;
+	      _e = err;
+	    } finally {
+	      try {
+	        if (!_n && _i["return"]) _i["return"]();
+	      } finally {
+	        if (_d) throw _e;
+	      }
+	    }
+	
+	    return _arr;
+	  }
+	
+	  return function (arr, i) {
+	    if (Array.isArray(arr)) {
+	      return arr;
+	    } else if ((0, _isIterable3.default)(Object(arr))) {
+	      return sliceIterator(arr, i);
+	    } else {
+	      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+	    }
+	  };
+	}();
+
+/***/ },
+/* 94 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(95), __esModule: true };
+
+/***/ },
+/* 95 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(72);
+	__webpack_require__(59);
+	module.exports = __webpack_require__(96);
+
+/***/ },
+/* 96 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var classof   = __webpack_require__(77)
+	  , ITERATOR  = __webpack_require__(70)('iterator')
+	  , Iterators = __webpack_require__(64);
+	module.exports = __webpack_require__(10).isIterable = function(it){
+	  var O = Object(it);
+	  return O[ITERATOR] !== undefined
+	    || '@@iterator' in O
+	    || Iterators.hasOwnProperty(classof(O));
+	};
+
+/***/ },
+/* 97 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(98), __esModule: true };
+
+/***/ },
+/* 98 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(72);
+	__webpack_require__(59);
+	module.exports = __webpack_require__(99);
+
+/***/ },
+/* 99 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var anObject = __webpack_require__(15)
+	  , get      = __webpack_require__(82);
+	module.exports = __webpack_require__(10).getIterator = function(it){
+	  var iterFn = get(it);
+	  if(typeof iterFn != 'function')throw TypeError(it + ' is not iterable!');
+	  return anObject(iterFn.call(it));
+	};
+
+/***/ },
+/* 100 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	var createEntity = exports.createEntity = function createEntity(entityClass, props) {
+	    for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+	        children[_key - 2] = arguments[_key];
+	    }
+	
+	    // TODO: Do better error handling!
+	    // TODO: is there a way to not have keys on every entity, or to infer them?
+	    //
+	    // if (!props || !has('key', props)) {
+	    //     console.error('Entity does not has key prop: ', entityClass.name, props);
+	    // }
+	
+	    return {
+	        entityClass: entityClass,
+	        entityClassName: entityClass.name,
+	        props: props,
+	        key: props && props.key ? props.key : entityClass.name + '-no-key',
+	        children: children
+	    };
 	};
 
 /***/ }

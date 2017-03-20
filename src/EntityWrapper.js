@@ -45,7 +45,8 @@ class EntityWrapper {
             props,
             children,
             context,
-            setState: this.setState
+            setState: this.setState,
+            getParams: this.getEntityParams
         }
 
         // willMount
@@ -132,8 +133,16 @@ class EntityWrapper {
                 this.childEntities = mountChildren(renderContent)
             }
 
+            else {
+                this.childEntities = []
+            }
+
         }
 
+        else {
+            this.childEntities = []
+        }
+        // console.log('this.childEntities!!', this.childEntities, this.entity)
         // didMount
         if (has('didMount', this.entity)) {
             this.entity.didMount(passedParamsWithState);
@@ -193,7 +202,9 @@ class EntityWrapper {
             this._callingDidUpdate = false;
         }
 
-        if (this.childEntities) {
+        const newRenderContent = getRenderContent(this.entity, this.getEntityParams())
+
+        if (this.childEntities || newRenderContent) {
             // get new rendered children.
 
             let childContext = this.context;
@@ -206,7 +217,7 @@ class EntityWrapper {
             }
 
             this._callingRender = true;
-            const newContent = getRenderContent(this.entity, this.getEntityParams()).map((content) => {
+            const newContent = newRenderContent.map((content) => {
                 content.context = childContext;
                 return content;
             });
@@ -292,7 +303,8 @@ class EntityWrapper {
             children: this.children,
             context: this.context,
             state: this.state,
-            setState: this.setState
+            setState: this.setState,
+            getParams: this.getEntityParams
         }
 
         return entityParams;
