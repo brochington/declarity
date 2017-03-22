@@ -325,6 +325,27 @@ class EntityWrapper {
     set children(children: ?Array): void {
         this._children = isArray(children) ? flatten(children) : [];
     }
+
+    updateProps = (newProps) => {
+        this.previousProps = this.props;
+        this.props = newProps;
+    }
+
+    updateChildren = (newChildren) => {
+        this.previousChildren = this.children;
+        this.children = newChildren;
+    }
+
+    updateContext = (newContext) => {
+        this.previousContext = this.context;
+        this.context = newContext;
+    }
+
+    updateParams = (newProps, newChildren, newContext) => {
+        this.updateProps(newProps);
+        this.updateChildren(newChildren);
+        this.updateContext(newContext);
+    }
 }
 
 export default EntityWrapper;
