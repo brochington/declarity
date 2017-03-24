@@ -14,9 +14,8 @@ Declarity offers:
 -
 
 
-So why just use React?
+So why not just use React?
 - YOU define the way your code interacts with whatever API you want.
--
 
 
 ```javascript
@@ -67,22 +66,17 @@ class Canvas {
     }
 }
 
-class Box {
-    updateBox = ({props, context}) => {
-        let {ctx} = context
-        let {position, rotation, size} = props
+const updateBox = ({props, context}) => {
+    let {ctx} = context
+    let {position, rotation, size} = props
 
-        ctx.fillRect(position.x, position.y, scale.x, scale.y)
-        ctx.rotate(rotation)
-    }
+    ctx.fillRect(position.x, position.y, scale.x, scale.y)
+    ctx.rotate(rotation)
+}
 
-    create = (params) => {
-        this.updateBox(params)
-    }
-
-    update = (params) => {
-        this.updateBox(params)
-    }
+const Box =  {
+    create: updateBox
+    update: updateBox
 }
 
 Declarity.register(<Canvas key='rotatingBoxCanvas'>)
