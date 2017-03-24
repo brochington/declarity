@@ -17541,12 +17541,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var newProps = (0, _extends3.default)({ key: 'parent' }, props);
 	
 	    if (entityKeys.has(newProps.key)) {
-	        console.log('second');
 	        var wrappedEntity = entityKeys.get(newProps.key);
 	        wrappedEntity.updateParams(newProps, children, context);
 	        wrappedEntity.update();
 	    } else {
-	        console.log('first');
 	        var _wrappedEntity = new _EntityWrapper2.default(entityClass, newProps, children);
 	        _wrappedEntity.mount(newProps, children, context);
 	

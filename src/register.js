@@ -10,14 +10,12 @@ export const register = (configObj: {entityClass: any, children: any, props: ?Ob
     const newProps: Object = {key: 'parent', ...props};
 
     if (entityKeys.has(newProps.key)) {
-        console.log('second');
         const wrappedEntity: EntityWrapper = entityKeys.get(newProps.key)
         wrappedEntity.updateParams(newProps, children, context);
         wrappedEntity.update();
     }
 
     else {
-        console.log('first');
         const wrappedEntity: EntityWrapper = new EntityWrapper(entityClass, newProps, children);
         wrappedEntity.mount(newProps, children, context);
 
