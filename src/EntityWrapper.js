@@ -92,7 +92,6 @@ class EntityWrapper {
             const didCreateParams = {
                 ...passedParamsWithState,
                 setState: (newState) => {
-                    console.log('didCreate setState', newState);
                     this.shouldUpdate = false;
 
                     this.setState(newState);
