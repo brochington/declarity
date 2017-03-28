@@ -32,7 +32,6 @@ import {
 class EntityWrapper {
     constructor(entityClass) {
         this.entityClass = entityClass;
-        this.entity = new entityClass();
     }
 
     mount = async (props, children, context = {}) => {
@@ -80,25 +79,9 @@ class EntityWrapper {
 
         this.shouldUpdate = true;
 
-        const passedParamsWithState = {
-            props: this.props,
-            children: this.children,
-            state: this.state,
-            context: this.context
-        }
-
         // didCreate
         if (has('didCreate', this.entity)) {
-            const didCreateParams = {
-                ...passedParamsWithState,
-                setState: (newState) => {
-                    this.shouldUpdate = false;
-
-                    this.setState(newState);
-                    this.shouldUpdate = true;
-                }
-            }
-            this.entity.didCreate(didCreateParams);
+            this.entity.didCreate(this.getEntityParams());
             // handle async stuff here.
         }
 
@@ -108,12 +91,12 @@ class EntityWrapper {
             let childContext = this.context;
 
             this._callingRender = true;
-            let renderContent = getRenderContent(this.entity, passedParamsWithState);
+            let renderContent = getRenderContent(this.entity, this.getEntityParams());
             this._callingRender = false;
 
             if (renderContent && renderContent.length && renderContent.length > 0) {
                 if (has('getChildContext', this.entity)) {
-                    const childContextVal = this.entity.getChildContext(passedParamsWithState)
+                    const childContextVal = this.entity.getChildContext(this.getEntityParams())
 
                     if (!isNil(childContextVal)) {
                         childContext = {
@@ -144,7 +127,7 @@ class EntityWrapper {
         // console.log('this.childEntities!!', this.childEntities, this.entity)
         // didMount
         if (has('didMount', this.entity)) {
-            this.entity.didMount(passedParamsWithState);
+            this.entity.didMount(this.getEntityParams());
         }
     }
 
@@ -323,6 +306,23 @@ class EntityWrapper {
 
     set children(children: ?Array): void {
         this._children = isArray(children) ? flatten(children) : [];
+    }
+
+    get entity() {
+        if (__DECLARITY_HOT_LOADER__) {
+            const hotClass = __DECLARITY_HOT_LOADER__[this.entityClass.__declarity_location].default
+
+            if (hotClass.__declarity_id !== this._hotClassID) {
+                this._hotClassID = hotClass.__declarity_id
+                this._entity = new hotClass()
+            }
+
+        }
+        // NOT hot loading.
+        if (!this._entity) {
+            this._entity = new this.entityClass()
+        }
+        return this._entity
     }
 
     updateProps = (newProps) => {

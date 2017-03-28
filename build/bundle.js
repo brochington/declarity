@@ -18821,7 +18821,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.mount = function () {
 	            var _ref = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee(props, children) {
 	                var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-	                var passedParams, initState, systemParams, systemsState, passedParamsWithState, didCreateParams;
+	                var passedParams, initState, systemParams, systemsState;
 	                return _regenerator2.default.wrap(function _callee$(_context) {
 	                    while (1) {
 	                        switch (_context.prev = _context.next) {
@@ -18868,27 +18868,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                                _this.shouldUpdate = true;
 	
-	                                passedParamsWithState = {
-	                                    props: _this.props,
-	                                    children: _this.children,
-	                                    state: _this.state,
-	                                    context: _this.context
-	                                };
-	
 	                                // didCreate
-	
 	                                if ((0, _ramda.has)('didCreate', _this.entity)) {
-	                                    didCreateParams = (0, _extends3.default)({}, passedParamsWithState, {
-	                                        setState: function setState(newState) {
-	                                            console.log('didCreate setState', newState);
-	                                            _this.shouldUpdate = false;
-	
-	                                            _this.setState(newState);
-	                                            _this.shouldUpdate = true;
-	                                        }
-	                                    });
-	
-	                                    _this.entity.didCreate(didCreateParams);
+	                                    _this.entity.didCreate(_this.getEntityParams());
 	                                    // handle async stuff here.
 	                                }
 	
@@ -18899,12 +18881,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                        var childContext = _this.context;
 	
 	                                        _this._callingRender = true;
-	                                        var renderContent = (0, _entityInstance.getRenderContent)(_this.entity, passedParamsWithState);
+	                                        var renderContent = (0, _entityInstance.getRenderContent)(_this.entity, _this.getEntityParams());
 	                                        _this._callingRender = false;
 	
 	                                        if (renderContent && renderContent.length && renderContent.length > 0) {
 	                                            if ((0, _ramda.has)('getChildContext', _this.entity)) {
-	                                                var childContextVal = _this.entity.getChildContext(passedParamsWithState);
+	                                                var childContextVal = _this.entity.getChildContext(_this.getEntityParams());
 	
 	                                                if (!(0, _ramda.isNil)(childContextVal)) {
 	                                                    childContext = (0, _extends3.default)({}, childContext, childContextVal);
@@ -18927,10 +18909,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                // console.log('this.childEntities!!', this.childEntities, this.entity)
 	                                // didMount
 	                                if ((0, _ramda.has)('didMount', _this.entity)) {
-	                                    _this.entity.didMount(passedParamsWithState);
+	                                    _this.entity.didMount(_this.getEntityParams());
 	                                }
 	
-	                            case 12:
+	                            case 11:
 	                            case 'end':
 	                                return _context.stop();
 	                        }
@@ -19122,7 +19104,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	
 	        this.entityClass = entityClass;
-	        this.entity = new entityClass();
 	    }
 	
 	    (0, _createClass3.default)(EntityWrapper, [{
@@ -19140,6 +19121,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        set: function set(children) {
 	            this._children = (0, _functional.isArray)(children) ? (0, _ramda.flatten)(children) : [];
+	        }
+	    }, {
+	        key: 'entity',
+	        get: function get() {
+	            if (__DECLARITY_HOT_LOADER__) {
+	                var hotClass = __DECLARITY_HOT_LOADER__[this.entityClass.__declarity_location].default;
+	
+	                if (hotClass.__declarity_id !== this._hotClassID) {
+	                    this._hotClassID = hotClass.__declarity_id;
+	                    this._entity = new hotClass();
+	                }
+	            }
+	            // NOT hot loading.
+	            if (!this._entity) {
+	                this._entity = new this.entityClass();
+	            }
+	            return this._entity;
 	        }
 	    }]);
 	    return EntityWrapper;
