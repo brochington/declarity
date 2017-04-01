@@ -115,6 +115,7 @@
     "globals": {
         "expect": true,
         "protractor": true,
-        "browser": true
+        "browser": true,
+        "sinon": true
     }
 }

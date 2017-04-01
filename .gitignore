@@ -9,3 +9,6 @@ node_modules
 
 # Distro folder
 dist
+
+# test coverage generated html
+coverage

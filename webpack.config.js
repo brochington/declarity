@@ -16,18 +16,11 @@ module.exports = {
         "immutable": "immutable"
     },
     module: {
-        loaders: [{
+        rules: [{
             test: /\.js$/,
-            loader: 'babel',
-            include: path.join(__dirname, 'src'),
-            query: {
-                cacheDirectory: true,
-                presets: ["es2015", "stage-0"]
-            }
+            use: ['babel-loader'],
+            include: path.join(__dirname, 'src')
         }]
-    },
-    resolve: {
-        extensions: ['', '.js']
     },
     devtool: 'source-map'
 }

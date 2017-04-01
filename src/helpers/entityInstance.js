@@ -79,20 +79,21 @@ export const updateChild = ([oldChild, newChild]) => {
 }
 
 export const removeChild = ({entityInstance}) => entityInstance.remove()
+export const prepareChildContentForMounting = ({entityClass, props, children, context}) => {
+    return {
+        entityClass,
+        props,
+        key: props.key,
+        children,
+        entityInstance: new EntityWrapper(entityClass),
+        entityClassName: entityClass.name,
+        context
+    }
+}
 
 export const mountChildren = pipe(
     rejectNil,
-    map(({entityClass, props, children, context}) => {
-        return {
-            entityClass,
-            props,
-            key: props.key,
-            children,
-            entityInstance: new EntityWrapper(entityClass),
-            entityClassName: entityClass.name,
-            context
-        }
-    }),
+    map(prepareChildContentForMounting),
     map(mountChild)
 )
 

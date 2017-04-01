@@ -1,3 +1,4 @@
+/* global __DECLARITY_HOT_LOADER__ */
 import {
     map,
     reduce,
@@ -309,8 +310,8 @@ class EntityWrapper {
     }
 
     get entity() {
-        if (__DECLARITY_HOT_LOADER__) {
-            const hotClass = __DECLARITY_HOT_LOADER__[this.entityClass.__declarity_location].default
+        if (global && global.hasOwnProperty('__DECLARITY_HOT_LOADER__')) {
+            const hotClass = global.__DECLARITY_HOT_LOADER__[this.entityClass.__declarity_location].default
 
             if (hotClass.__declarity_id !== this._hotClassID) {
                 this._hotClassID = hotClass.__declarity_id

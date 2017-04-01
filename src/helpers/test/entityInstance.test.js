@@ -27,6 +27,55 @@ describe('Entity Instance helpers ->', () => {
             expect(callback.calledOnce).to.equal(true)
         })
     })
+    describe('prepareChildContentForMounting() -> ', () => {
+        it('returns correct content', () => {
+            const props = {key: 'testKey'}
+            const children = []
+            const entityClass = class TestEntityClass {
+
+            }
+            const context = {}
+
+            const childContent = {
+                entityClass,
+                props,
+                children,
+                context
+            }
+            const groomedContent = entityInstanceHelpers.prepareChildContentForMounting(childContent)
+
+            expect(groomedContent.props).to.eql(props);
+            expect(groomedContent.children).to.eql(children);
+            expect(groomedContent.context).to.eql(context);
+            expect(groomedContent.key).to.equal(props.key);
+            expect(groomedContent.entityClassName).to.equal(entityClass.name)
+            expect(groomedContent.entityInstance.entityClass.name).to.equal(entityClass.name)
+        })
+    })
+    describe('mountChildren', () => {
+        it('calls mount on children', () => {
+            const props = {key: 'testKey'}
+            const children = []
+            const entityClass = class TestEntityClass {
+
+            }
+            const context = {}
+
+            const childContent = {
+                entityClass,
+                props,
+                children,
+                context
+            }
+
+            const childrenReadyForMounting = [childContent, null]
+            const childEntities = entityInstanceHelpers.mountChildren(childrenReadyForMounting);
+
+            expect(childEntities).to.have.length(1)
+            //TODO: write a couple more assertions here to check child entity.
+
+        })
+    })
     describe('updateChild', () => {
         it('calls updateChild, and returns oldChild', () => {
             const callback = sinon.spy()

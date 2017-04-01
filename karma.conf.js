@@ -1,3 +1,4 @@
+var path = require('path');
 var travisENV = process.env.NODE_ENV === 'travis';
 
 module.exports = function(config) {
@@ -13,6 +14,7 @@ module.exports = function(config) {
         'karma-sinon',
         'karma-webpack',
         'karma-mocha-reporter',
+        'karma-coverage-istanbul-reporter'
     ].concat(travisENV ? ['karma-firefox-launcher'] : ['karma-chrome-launcher']),
 
     // frameworks to use
@@ -33,16 +35,12 @@ module.exports = function(config) {
 
     webpack: {
         module: {
-            loaders: [{
+            rules: [{
                 test: /\.js$/,
-                exclude: /node_modules/,
-                loader: 'babel-loader',
-                query: {
-                    compact: false,
-                    presets: ['es2015', 'stage-0']
-                }
+                use: ['istanbul-instrumenter-loader', 'babel-loader'],
+                include: path.join(__dirname, 'src')
             }]
-        }
+        },
     },
 
     // preprocess matching files before serving them to the browser
@@ -56,7 +54,7 @@ module.exports = function(config) {
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['mocha'],
+    reporters: ['mocha', 'coverage-istanbul'],
 
 
     // web server port
@@ -87,6 +85,15 @@ module.exports = function(config) {
 
     // Concurrency level
     // how many browser should be started simultaneous
-    concurrency: Infinity
+    concurrency: Infinity,
+
+    coverageIstanbulReporter: {
+        reports: ['text-summary', 'html'],
+        dir: path.join(__dirname, 'coverage'),
+        fixWebpackSourcePaths: true,
+        'report-config': {
+            subdir: 'html'
+        }
+    }
   })
 }
