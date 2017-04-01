@@ -3,10 +3,6 @@
 export const createEntity = (entityClass: any, props: any, ...children: any) => {
     // TODO: Do better error handling!
     // TODO: is there a way to not have keys on every entity, or to infer them?
-    //
-    // if (!props || !has('key', props)) {
-    //     console.error('Entity does not has key prop: ', entityClass.name, props);
-    // }
 
     return {
         entityClass,
