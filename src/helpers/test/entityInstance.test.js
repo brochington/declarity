@@ -47,7 +47,7 @@ describe('Entity Instance helpers ->', () => {
             expect(groomedContent.props).to.eql(props);
             expect(groomedContent.children).to.eql(children);
             expect(groomedContent.context).to.eql(context);
-            expect(groomedContent.key).to.equal(props.key);
+            expect(groomedContent.key).to.equal('testKey');
             expect(groomedContent.entityClassName).to.equal(entityClass.name)
             expect(groomedContent.entityInstance.entityClass.name).to.equal(entityClass.name)
         })

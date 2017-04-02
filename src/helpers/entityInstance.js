@@ -22,30 +22,34 @@ import {
 
 import EntityWrapper from '../EntityWrapper'
 
-export const diffComponents = (oldContent, newContent) => {
+export function diffComponents(oldContent, newContent) {
+
     const newHashMap = contentByKey(newContent);
     const oldHashMap = contentByKey(oldContent);
 
-    const added = reduce((acc, c) => {
-        if (!has(c.key, oldHashMap)) {
-            acc.push(c)
-        }
-        return acc;
-    }, [], newContent);
+    const added = [];
+    const updated = [];
+    const removed = [];
 
-    const updated = reduce((acc, c) => {
-        if (has(c.key, newHashMap)) {
-            acc.push([c, newHashMap[c.key]]);
-        }
-        return acc;
-    }, [], oldContent);
+    for (let i = 0; i < newContent.length; i++) {
+        const c = newContent[i]
 
-    const removed = reduce((acc, c) => {
-        if (!has(c.key, newHashMap)) {
-            acc.push(c);
+        if (!oldHashMap.hasOwnProperty(c.key)) {
+            added.push(c)
         }
-        return acc;
-    }, [], oldContent);
+    }
+
+    for (let i = 0; i < oldContent.length; i++) {
+        const c = oldContent[i]
+
+        if (newHashMap.hasOwnProperty(c.key)) {
+            updated.push([c, newHashMap[c.key]])
+        }
+
+        if (!newHashMap.hasOwnProperty(c.key)) {
+            removed.push(c)
+        }
+    }
 
     return {
         added,
@@ -54,7 +58,7 @@ export const diffComponents = (oldContent, newContent) => {
     }
 }
 
-export const mountChild = (childEntity) => {
+export function mountChild(childEntity) {
     childEntity.entityInstance.mount(childEntity.props, childEntity.children, childEntity.context);
     return childEntity;
 }
@@ -78,8 +82,11 @@ export const updateChild = ([oldChild, newChild]) => {
     return oldChild;
 }
 
-export const removeChild = ({entityInstance}) => entityInstance.remove()
-export const prepareChildContentForMounting = ({entityClass, props, children, context}) => {
+export function removeChild({entityInstance}) {
+    entityInstance.remove()
+}
+
+export function prepareChildContentForMounting({entityClass, props, children, context}) {
     return {
         entityClass,
         props,
@@ -101,7 +108,7 @@ export const updateChildren = map(updateChild)
 
 export const removeChildren = map(removeChild)
 
-export const generateChildEntities = (oldContent, newContent) => {
+export function generateChildEntities(oldContent, newContent) {
     const {added, updated, removed} = diffComponents(oldContent, newContent);
 
     const addedEntities = mountChildren(added);

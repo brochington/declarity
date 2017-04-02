@@ -35,7 +35,7 @@ class EntityWrapper {
         this.entityClass = entityClass;
     }
 
-    mount = async (props, children, context = {}) => {
+    mount = (props, children, context = {}) => {
         this.props = props;
         this.children = children;
         this.context = context;
@@ -50,14 +50,14 @@ class EntityWrapper {
         }
 
         // willMount
-        if (has('willMount', this.entity)) {
+        if (this.entity.hasOwnProperty('willMount')) {
             this._callingWillMount = true;
             this.entity.willMount(passedParams);
             this._callingWillMount = false;
         }
 
         // create
-        if (has('create', this.entity)) {
+        if (this.entity.hasOwnProperty('create')) {
             this._callingCreate = true;
             const initState = this.entity.create(passedParams);
 
@@ -74,20 +74,18 @@ class EntityWrapper {
                 this._callingCreate = false;
                 this.setState(initState);
             }
-
-
         }
 
         this.shouldUpdate = true;
 
         // didCreate
-        if (has('didCreate', this.entity)) {
+        if (this.entity.hasOwnProperty('didCreate')) {
             this.entity.didCreate(this.getEntityParams());
             // handle async stuff here.
         }
 
         // mount the children
-        if (has('render', this.entity)) {
+        if (this.entity.hasOwnProperty('render')) {
             //TODO: will need to add checks for other values besides <Entity> and null in render array.
             let childContext = this.context;
 
@@ -125,16 +123,16 @@ class EntityWrapper {
         else {
             this.childEntities = []
         }
-        // console.log('this.childEntities!!', this.childEntities, this.entity)
+
         // didMount
-        if (has('didMount', this.entity)) {
+        if (this.entity.hasOwnProperty('didMount')) {
             this.entity.didMount(this.getEntityParams());
         }
     }
 
     update = () => {
         // shouldUpdate
-        if (has('shouldUpdate', this.entity)) {
+        if (this.entity.hasOwnProperty('shouldUpdate')) {
             const shouldUpdateResult = this.entity.shouldUpdate()
 
             if (typeof shouldUpdateResult === "boolean") {
@@ -147,15 +145,14 @@ class EntityWrapper {
         this.shouldUpdate = false;
 
         // willUpdate
-        if (has('willUpdate', this.entity)) {
+        if (this.entity.hasOwnProperty('willUpdate')) {
             this._callingWillUpdate = true;
             this.entity.willUpdate(this.getEntityParams());
             this._callingWillUpdate = false;
         }
 
         // update
-        // The update process might be the "pipeline" that I've been thinking of.
-        if (has('update', this.entity)) {
+        if (this.entity.hasOwnProperty('update')) {
             this._callingUpdate = true;
             const entityParams = this.getEntityParams();
 
@@ -179,7 +176,8 @@ class EntityWrapper {
         }
 
         // didUpdate
-        if (has('didUpdate', this.entity)) {
+
+        if (this.entity.hasOwnProperty('didUpdate')) {
             this._callingDidUpdate = true;
             this.entity.didUpdate(this.getEntityParams());
             this._callingDidUpdate = false;
@@ -192,7 +190,7 @@ class EntityWrapper {
 
             let childContext = this.context;
 
-            if (has('getChildContext', this.entity)) {
+            if (this.entity.hasOwnProperty('getChildContext')) {
                 const childContextVal = this.entity.getChildContext(this.getEntityParams())
                 if (!isNil(childContextVal)) {
                     childContext = {...childContext, ...childContextVal}
@@ -204,7 +202,7 @@ class EntityWrapper {
                 content.context = childContext;
                 return content;
             });
-            // console.log(newContent)
+
             this._callingRender = false;
 
             // If entityClassNames are same, then we can assume that this level didn't change.
@@ -216,10 +214,7 @@ class EntityWrapper {
                 // No add/remove of components is needed.
                 // Just update Props.
 
-                this.childEntities = pipe(
-                    zip(this.childEntities),
-                    updateChildren
-                )(newContent)
+                this.childEntities = updateChildren(zip(this.childEntities, newContent))
             }
 
             else {
@@ -231,20 +226,20 @@ class EntityWrapper {
     }
 
     setState = (newState: any) => {
-        if (this._callingWillMount) {
-            console.log('trying to call setState in willMount. This is a noop', this.entity);
-            return;
-        }
-
-        if (this._callingCreate) {
-            console.log('trying to call setState in create(). This is a noop', this.entity);
-            return;
-        }
-
-        if (this._callingUpdate) {
-            console.log('trying to call setState in update(). This is a noop. please have the update() method return any updated state.', this.entity);
-            return;
-        }
+        // if (this._callingWillMount) {
+        //     console.log('trying to call setState in willMount. This is a noop', this.entity);
+        //     return;
+        // }
+        //
+        // if (this._callingCreate) {
+        //     console.log('trying to call setState in create(). This is a noop', this.entity);
+        //     return;
+        // }
+        //
+        // if (this._callingUpdate) {
+        //     console.log('trying to call setState in update(). This is a noop. please have the update() method return any updated state.', this.entity);
+        //     return;
+        // }
 
         this.previousState = this.state;
 
@@ -263,15 +258,16 @@ class EntityWrapper {
 
     remove = () => {
         // Figure out if anything needs to happen here.
-        if (has('willUnmount', this.entity)) {
+
+        if (this.entity.hasOwnProperty('willUnmount')) {
             this.entity.willUnmount(this.getEntityParams());
         }
 
-        if (has('render', this.entity)) {
+        if (this.entity.hasOwnProperty('render')) {
             removeChildren(this.childEntities)
         }
 
-        if (has('didUnmount', this.entity)) {
+        if (this.entity.hasOwnProperty('didUnmount')) {
             this.entity.didUnmount(this.getEntityParams())
         }
     }
@@ -310,7 +306,11 @@ class EntityWrapper {
     }
 
     get entity() {
-        if (global && global.hasOwnProperty('__DECLARITY_HOT_LOADER__')) {
+        if (
+            global &&
+            global.hasOwnProperty('__DECLARITY_HOT_LOADER__') &&
+            this.entityClass.__declarity_location
+        ) {
             const hotClass = global.__DECLARITY_HOT_LOADER__[this.entityClass.__declarity_location].default
 
             if (hotClass.__declarity_id !== this._hotClassID) {
