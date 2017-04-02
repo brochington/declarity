@@ -23,7 +23,6 @@ import {
 import EntityWrapper from '../EntityWrapper'
 
 export function diffComponents(oldContent, newContent) {
-
     const newHashMap = contentByKey(newContent);
     const oldHashMap = contentByKey(oldContent);
 
@@ -82,9 +81,7 @@ export const updateChild = ([oldChild, newChild]) => {
     return oldChild;
 }
 
-export function removeChild({entityInstance}) {
-    entityInstance.remove()
-}
+
 
 export function prepareChildContentForMounting({entityClass, props, children, context}) {
     return {
@@ -104,9 +101,26 @@ export const mountChildren = pipe(
     map(mountChild)
 )
 
-export const updateChildren = map(updateChild)
+export function updateChildren(childrenToUpdate) {
+    const updatedChildren = [];
 
-export const removeChildren = map(removeChild)
+    for (let i = 0; i < childrenToUpdate.length; i++) {
+        updatedChildren.push(updateChild(childrenToUpdate[i]))
+    }
+
+    return updatedChildren
+}
+
+export function removeChild({entityInstance}) {
+    entityInstance.remove()
+}
+
+export function removeChildren(childrenToRemove) {
+
+    for (let i = 0; i < childrenToRemove.length; i++) {
+        removeChild(childrenToRemove[i])
+    }
+}
 
 export function generateChildEntities(oldContent, newContent) {
     const {added, updated, removed} = diffComponents(oldContent, newContent);
