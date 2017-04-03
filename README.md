@@ -2,6 +2,10 @@
 
 [![Build Status](https://travis-ci.org/brochington/declarity.svg?branch=master)](https://travis-ci.org/brochington/declarity)
 
+```
+npm install --save declarity
+```
+
 Declarity allows you to write and organize imperative API code in a declarative manner similar to React.
 
 Declarity offers:
@@ -11,7 +15,6 @@ Declarity offers:
 - Not coupled to any specific API, including the DOM.
 - Extremely fast
 - API improvements to help structure your code
--
 
 
 So why not just use React?

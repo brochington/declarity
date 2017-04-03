@@ -9599,14 +9599,6 @@ var EntityWrapper = function () {
                 }
             }
 
-            // didUpdate
-
-            if (_this.entity.hasOwnProperty('didUpdate')) {
-                _this._callingDidUpdate = true;
-                _this.entity.didUpdate(_this.getEntityParams());
-                _this._callingDidUpdate = false;
-            }
-
             var newRenderContent = (0, _entityInstance.getRenderContent)(_this.entity, _this.getEntityParams());
 
             if (_this.childEntities || newRenderContent) {
@@ -9649,6 +9641,13 @@ var EntityWrapper = function () {
             }
 
             _this.shouldUpdate = true;
+
+            // didUpdate
+            if (_this.entity.hasOwnProperty('didUpdate')) {
+                _this._callingDidUpdate = true;
+                _this.entity.didUpdate(_this.getEntityParams());
+                _this._callingDidUpdate = false;
+            }
         };
 
         this.setState = function (newState) {

@@ -175,14 +175,6 @@ class EntityWrapper {
             }
         }
 
-        // didUpdate
-
-        if (this.entity.hasOwnProperty('didUpdate')) {
-            this._callingDidUpdate = true;
-            this.entity.didUpdate(this.getEntityParams());
-            this._callingDidUpdate = false;
-        }
-
         const newRenderContent = getRenderContent(this.entity, this.getEntityParams())
 
         if (this.childEntities || newRenderContent) {
@@ -223,6 +215,14 @@ class EntityWrapper {
         }
 
         this.shouldUpdate = true;
+
+        // didUpdate
+        if (this.entity.hasOwnProperty('didUpdate')) {
+            this._callingDidUpdate = true;
+            this.entity.didUpdate(this.getEntityParams());
+            this._callingDidUpdate = false;
+        }
+
     }
 
     setState = (newState: any) => {
