@@ -1,24 +1,12 @@
-import {createRandomString} from './helpers/string';
-import {isNil, isArray, flatten} from 'lodash';
-
+//TODO: figure out a way to make systems lifecycle methods work if original entity doesn't have method.
 class Entity {
-    entityId = createRandomString()
-
-    get props(): Object {
-        return this._props;
-    }
-
-    set props(props: ?Object) {
-        this._props = isNil(props) ? {} : props;
-    }
-
-    get children(): Array {
-        return this._children;
-    }
-
-    set children(children: ?Array) {
-        this._children = isArray(children) ? flatten(children) : [];
-    }
+    willMount = () => {}
+    create = () => {}
+    didCreate = () => {}
+    didMount = () => {}
+    willUpdate = () => {}
+    update = () => {}
+    didUpdate = () => {}
 }
 
 export default Entity;
