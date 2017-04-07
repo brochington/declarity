@@ -52,7 +52,11 @@ class EntityWrapper {
         // willMount
         if (this.entity.hasOwnProperty('willMount')) {
             this._callingWillMount = true;
+
             this.entity.willMount(passedParams);
+
+            callMethodInSystems('willMount', passedParams);
+
             this._callingWillMount = false;
         }
 
@@ -76,13 +80,27 @@ class EntityWrapper {
             }
         }
 
-        this.shouldUpdate = true;
 
         // didCreate
         if (this.entity.hasOwnProperty('didCreate')) {
-            this.entity.didCreate(this.getEntityParams());
-            // handle async stuff here.
+            this._callingDidCreate = true;
+
+            const didCreateState = this.entity.didCreate(this.getEntityParams())
+
+            this._callingDidCreate = false;
+
+            if (didCreateState && typeof didCreateState === 'object') {
+                this.setState(didCreateState)
+            }
+
+            const didCreateSystemState = callMethodInSystems('didCreate', {...this.getEntityParams()})
+
+            if (didCreateSystemState && typeof didCreateSystemState === 'object') {
+                this.setState(didCreateSystemState.state)
+            }
         }
+
+        this.shouldUpdate = true;
 
         // mount the children
         if (this.entity.hasOwnProperty('render')) {
@@ -103,7 +121,6 @@ class EntityWrapper {
                             ...childContextVal
                         }
                     }
-
                 }
 
                 renderContent = renderContent.map(content => {
@@ -127,6 +144,8 @@ class EntityWrapper {
         // didMount
         if (this.entity.hasOwnProperty('didMount')) {
             this.entity.didMount(this.getEntityParams());
+            //TODO: should this method adjust state?
+            callMethodInSystems('didMount', {...this.getEntityParams()})
         }
     }
 
@@ -148,6 +167,8 @@ class EntityWrapper {
         if (this.entity.hasOwnProperty('willUpdate')) {
             this._callingWillUpdate = true;
             this.entity.willUpdate(this.getEntityParams());
+            //TODO: should this method adjust state?
+            callMethodInSystems('willUpdate', {...this.getEntityParams()})
             this._callingWillUpdate = false;
         }
 
@@ -214,15 +235,27 @@ class EntityWrapper {
             }
         }
 
-        this.shouldUpdate = true;
 
         // didUpdate
         if (this.entity.hasOwnProperty('didUpdate')) {
             this._callingDidUpdate = true;
-            this.entity.didUpdate(this.getEntityParams());
+
+            const didUpdateState = this.entity.didCreate(this.getEntityParams())
+
             this._callingDidUpdate = false;
+
+            if (didUpdateState && typeof didUpdateState === 'object') {
+                this.setState(didUpdateState)
+            }
+
+            const didUpdateSystemState = callMethodInSystems('didUpdate', {...this.getEntityParams()})
+
+            if (didUpdateSystemState && typeof didUpdateSystemState === 'object') {
+                this.setState(didUpdateSystemState.state)
+            }
         }
 
+        this.shouldUpdate = true;
     }
 
     setState = (newState: any) => {
@@ -260,7 +293,21 @@ class EntityWrapper {
         // Figure out if anything needs to happen here.
 
         if (this.entity.hasOwnProperty('willUnmount')) {
-            this.entity.willUnmount(this.getEntityParams());
+            this._callingWillUnmount = true;
+
+            const willUnmountState = this.entity.didCreate(this.getEntityParams())
+
+            this._callingWillUnmount = false;
+
+            if (willUnmountState && typeof willUnmountState === 'object') {
+                this.setState(willUnmountState)
+            }
+
+            const willUnmountSystemState = callMethodInSystems('willUnmount', {...this.getEntityParams()})
+
+            if (willUnmountSystemState && typeof willUnmountSystemState === 'object') {
+                this.setState(willUnmountSystemState.state)
+            }
         }
 
         if (this.entity.hasOwnProperty('render')) {
@@ -269,6 +316,8 @@ class EntityWrapper {
 
         if (this.entity.hasOwnProperty('didUnmount')) {
             this.entity.didUnmount(this.getEntityParams())
+
+            callMethodInSystems('didUnmount', {...this.getEntityParams()})
         }
     }
 
