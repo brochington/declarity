@@ -55,7 +55,9 @@ class EntityWrapper {
 
             this.entity.willMount(passedParams);
 
-            callMethodInSystems('willMount', passedParams);
+            if (has('systems', passedParams.props)) {
+                callMethodInSystems('willMount', passedParams);
+            }
 
             this._callingWillMount = false;
         }
@@ -92,11 +94,12 @@ class EntityWrapper {
             if (didCreateState && typeof didCreateState === 'object') {
                 this.setState(didCreateState)
             }
+            if (has('systems', this.props)) {
+                const didCreateSystemState = callMethodInSystems('didCreate', {...this.getEntityParams()})
 
-            const didCreateSystemState = callMethodInSystems('didCreate', {...this.getEntityParams()})
-
-            if (didCreateSystemState && typeof didCreateSystemState === 'object') {
-                this.setState(didCreateSystemState.state)
+                if (didCreateSystemState && typeof didCreateSystemState === 'object') {
+                    this.setState(didCreateSystemState.state)
+                }
             }
         }
 
@@ -145,7 +148,9 @@ class EntityWrapper {
         if (this.entity.hasOwnProperty('didMount')) {
             this.entity.didMount(this.getEntityParams());
             //TODO: should this method adjust state?
-            callMethodInSystems('didMount', {...this.getEntityParams()})
+            if (has('systems', this.props)) {
+                callMethodInSystems('didMount', {...this.getEntityParams()})
+            }
         }
     }
 
@@ -168,7 +173,9 @@ class EntityWrapper {
             this._callingWillUpdate = true;
             this.entity.willUpdate(this.getEntityParams());
             //TODO: should this method adjust state?
-            callMethodInSystems('willUpdate', {...this.getEntityParams()})
+            if (has('systems', this.props)) {
+                callMethodInSystems('willUpdate', {...this.getEntityParams()})
+            }
             this._callingWillUpdate = false;
         }
 
@@ -178,10 +185,10 @@ class EntityWrapper {
             const entityParams = this.getEntityParams();
 
             let updatedState = this.entity.update({...this.getEntityParams()});
-
+            // console.log('updatedState', updatedState, this.entity)
             if (has('systems', entityParams.props)) {
                 const systemsParams = updatedState
-                                          ? {...this.getEntityParams(), state: updatedState}
+                                          ? {...entityParams, state: {...entityParams.state, ...updatedState}}
                                           : this.getEntityParams()
 
                 const newSystemsParams = callMethodInSystems('update', systemsParams)
@@ -240,7 +247,7 @@ class EntityWrapper {
         if (this.entity.hasOwnProperty('didUpdate')) {
             this._callingDidUpdate = true;
 
-            const didUpdateState = this.entity.didCreate(this.getEntityParams())
+            const didUpdateState = this.entity.didUpdate(this.getEntityParams())
 
             this._callingDidUpdate = false;
 
@@ -248,10 +255,12 @@ class EntityWrapper {
                 this.setState(didUpdateState)
             }
 
-            const didUpdateSystemState = callMethodInSystems('didUpdate', {...this.getEntityParams()})
+            if (has('systems', this.props)) {
+                const didUpdateSystemState = callMethodInSystems('didUpdate', {...this.getEntityParams()})
 
-            if (didUpdateSystemState && typeof didUpdateSystemState === 'object') {
-                this.setState(didUpdateSystemState.state)
+                if (didUpdateSystemState && typeof didUpdateSystemState === 'object') {
+                    this.setState(didUpdateSystemState.state)
+                }
             }
         }
 
@@ -303,10 +312,12 @@ class EntityWrapper {
                 this.setState(willUnmountState)
             }
 
-            const willUnmountSystemState = callMethodInSystems('willUnmount', {...this.getEntityParams()})
+            if (has('systems', this.props)) {
+                const willUnmountSystemState = callMethodInSystems('willUnmount', {...this.getEntityParams()})
 
-            if (willUnmountSystemState && typeof willUnmountSystemState === 'object') {
-                this.setState(willUnmountSystemState.state)
+                if (willUnmountSystemState && typeof willUnmountSystemState === 'object') {
+                    this.setState(willUnmountSystemState.state)
+                }
             }
         }
 
@@ -317,7 +328,9 @@ class EntityWrapper {
         if (this.entity.hasOwnProperty('didUnmount')) {
             this.entity.didUnmount(this.getEntityParams())
 
-            callMethodInSystems('didUnmount', {...this.getEntityParams()})
+            if (has('systems', this.props)) {
+                callMethodInSystems('didUnmount', {...this.getEntityParams()})
+            }
         }
     }
 
