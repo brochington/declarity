@@ -13,7 +13,7 @@ export const createEntity = (entityClass: any, props: any, ...children: any) => 
 
     const entityClassIsString = typeof entityClass == 'string';
 
-    danger(!entityClassIsString || (entityClassIsString && knownEntityTypes[entityClass]) , `EntityClass is neither usable class, or a know entity type. Please check ${entityClass} with key ${props.key}`)
+    danger(!entityClassIsString || (entityClassIsString && knownEntityTypes[entityClass]), `EntityClass is neither usable class, or a know entity type. Please check ${entityClass} with key ${props.key}`)
 
     const newEntityClass = entityClassIsString ? knownEntityTypes[entityClass] : entityClass;
 
