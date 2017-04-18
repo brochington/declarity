@@ -6,22 +6,25 @@
 npm install --save declarity
 ```
 
-Declarity allows you to write and organize imperative API code in a declarative manner similar to React.
+Declarity allows you to write and organize imperative API code in a declarative manner. Its structure is heavily inspired by React, but is extended with Entity/Component/System functionality. There is no rendering step in Declarity, as any rendering code is defined directly within entities. This gives the developer complete control to interact with whatever API they choose, without sacrificing performance or efficiency.
 
 Declarity offers:
+- Extremely fast tree diffing. Running a tree with thousands of nodes at 60FPS is no problem.
 - Hot module reloading via webpack and the [declarity loader](https://github.com/brochington/declarity-loader)
-- The ability to interact with imperative APIs in a declarative manner.
 - A heavily React inspired API (lifecycle methods, props, state, etc...)
-- JSX
-- Not coupled to any specific API, including the DOM.
-- Extremely fast
-- API improvements to help structure your code
+- JSX syntax support.
+- Works in unison with React.
+- No coupling to any specific API, including the DOM.
+
+Declarity is great for:
+- Projects that do not need a complete DOM diffing option.
+- Adding familiar code structure to any API. Declarity was originally designed to help target WebGL.
+- Targeting multiple APIs within the same tree.
 
 
-So why not just use React?
-- YOU define the way your code interacts with whatever API you want.
-- There is no rendering step in Declarity, as any rendering code is defined within entities.
+## Example
 
+below is a basic example of a Declarity app that renders three spinning boxes on a canvas.
 
 ```javascript
 /** @jsx Declarity.createEntity */
@@ -81,6 +84,9 @@ class Canvas {
         document.getElementsByTagName('body')[0].appendChild(canvas)
 
         const render = () => {
+            /*
+                Declarity is fast! It has no problems updating an entity tree frequently.
+            */
             requestAnimationFrame(render)
             /*
                 Instead of the setState method being found on the instance of the component,
@@ -140,6 +146,16 @@ class Canvas {
         ]
     }
 }
-
+/*
+    "Mount" the app.
+*/
 Declarity.register(<Canvas key='rotatingBoxCanvas'>)
 ```
+
+### Related repos
+
+[declarity-react-boilerplate](https://github.com/brochington/declarity-react-boilerplate)
+
+[declarity-three-boilerplate](https://github.com/brochington/declarity-three-boilerplate)
+
+[declarity-loader](https://github.com/brochington/declarity-react-boilerplate)
