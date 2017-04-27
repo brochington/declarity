@@ -6,6 +6,11 @@
 npm install --save declarity
 ```
 
+
+### Documentation
+
+[view documentation here](https://brochington.gitbooks.io/declarity-documentation)
+
 Declarity allows you to write and organize imperative API code in a declarative manner. Its structure is heavily inspired by React, but is extended with Entity/Component/System functionality. There is no rendering step in Declarity, as any rendering code is defined directly within entities. This gives the developer complete control to interact with whatever API they choose, without sacrificing performance or efficiency.
 
 Declarity offers:
