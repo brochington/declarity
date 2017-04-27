@@ -6,26 +6,34 @@
 npm install --save declarity
 ```
 
-Declarity allows you to write and organize imperative API code in a declarative manner similar to React.
+Declarity allows you to write and organize imperative API code in a declarative manner. Its structure is heavily inspired by React, but is extended with Entity/Component/System functionality. There is no rendering step in Declarity, as any rendering code is defined directly within entities. This gives the developer complete control to interact with whatever API they choose, without sacrificing performance or efficiency.
 
 Declarity offers:
-- The ability to interact with imperative APIs in a declarative manner.
+- Extremely fast tree diffing. Running a tree with thousands of nodes at 60FPS is no problem.
+- Hot module reloading via webpack and the [declarity loader](https://github.com/brochington/declarity-loader)
 - A heavily React inspired API (lifecycle methods, props, state, etc...)
-- JSX
-- Not coupled to any specific API, including the DOM.
-- Extremely fast
-- API improvements to help structure your code
+- JSX syntax support.
+- Works in unison with React.
+- No coupling to any specific API, including the DOM.
+
+Declarity is great for:
+- Projects that do not need a complete DOM diffing option.
+- Adding familiar code structure to any API. Declarity was originally designed to help target WebGL.
+- Targeting multiple APIs within the same tree.
 
 
-So why not just use React?
-- YOU define the way your code interacts with whatever API you want.
-- There is no rendering step in Declarity, as any rendering code is defined within entities.
+## Example
 
+below is a basic example of a Declarity app that renders three spinning boxes on a canvas.
 
 ```javascript
 /** @jsx Declarity.createEntity */
 import Declarity from 'declarity'
 
+/*
+    Declarity supports the use of "systems", which offer a way to extend entities without
+    having access to the internals of an entity.
+ */
 const translate = {
     update: ({context, props}) => {
         let {ctx} = context
@@ -55,20 +63,15 @@ const renderBox = {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
 }
-
-class Box {
-    create = () => {}
-
-    update = () => {}
-}
-
+/*
+    "Entities" are analogous to React components. They contain lifecycle methods, as
+    well as a render method for rendering children. Unlike React, Declarity uses standard classes
+    that do not need to inherit from a base class.
+*/
 class Canvas {
-    getChildContext = ({state}) => {
-        let {ctx, canvasHeight, canvasWidth} = state
-
-        return {ctx, canvasHeight, canvasWidth}
-    }
-
+    /*
+        The create() method is where you can initialize any state that belongs to the entity.
+    */
     create = ({setState}) => {
         const canvas = document.createElement('canvas')
         const ctx = canvas.getContext('2d')
@@ -81,13 +84,21 @@ class Canvas {
         document.getElementsByTagName('body')[0].appendChild(canvas)
 
         const render = () => {
+            /*
+                Declarity is fast! It has no problems updating an entity tree frequently.
+            */
             requestAnimationFrame(render)
-
+            /*
+                Instead of the setState method being found on the instance of the component,
+                It is passed in through arguments.
+            */
             setState({})
         }
 
         render()
-
+        /*
+            Entity state can be set by return value.
+        */
         return {canvas, ctx, canvasHeight, canvasWidth, count: 1}
     }
 
@@ -103,8 +114,12 @@ class Canvas {
         const {context, ctx, count} = state;
         const rotationVal = (count % 360) * (Math.PI / 180)
 
+        /*
+            The "entity" type is an empty type, similar to a "div".
+            Functionality can be given to the entities via props and systems.
+        */
         return [
-            <Box
+            <entity
                 key={'box1'}
                 systems={[translate, rotate, renderBox]}
                 position={{x: 30, y: 30}}
@@ -112,7 +127,7 @@ class Canvas {
                 scale={{x: 50, y: 50}}
                 color="red"
             />,
-            <Box
+            <entity
                 key={'box2'}
                 systems={[translate, rotate, renderBox]}
                 position={{x: 100, y: 100}}
@@ -120,7 +135,7 @@ class Canvas {
                 scale={{x: 50, y: 50}}
                 color="blue"
             />,
-            <Box
+            <entity
                 key={'box3'}
                 systems={[translate, rotate, renderBox]}
                 position={{x: 70, y: 120}}
@@ -131,6 +146,16 @@ class Canvas {
         ]
     }
 }
-
+/*
+    "Mount" the app.
+*/
 Declarity.register(<Canvas key='rotatingBoxCanvas'>)
 ```
+
+### Related repos
+
+[declarity-react-boilerplate](https://github.com/brochington/declarity-react-boilerplate)
+
+[declarity-three-boilerplate](https://github.com/brochington/declarity-three-boilerplate)
+
+[declarity-loader](https://github.com/brochington/declarity-react-boilerplate)
