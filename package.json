@@ -1,6 +1,6 @@
 {
   "name": "declarity",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "A declarative way to organize application code",
   "main": "./build/bundle.js",
   "scripts": {

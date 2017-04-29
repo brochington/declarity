@@ -164,3 +164,16 @@ Declarity.register(<Canvas key='rotatingBoxCanvas'>)
 [declarity-three-boilerplate](https://github.com/brochington/declarity-three-boilerplate)
 
 [declarity-loader](https://github.com/brochington/declarity-react-boilerplate)
+
+
+***
+
+If you:
+* Make something cool with Declarity
+* Find a bug, or in general can't get Declarity working
+* Have an idea for an improvement.
+* Want to help out
+
+Let me know!
+
+If you would like to show your support, giving Declarity a :star: on github is always appreciated :blush:
