@@ -373,11 +373,11 @@ class EntityWrapper {
             global.hasOwnProperty('__DECLARITY_HOT_LOADER__') &&
             this.entityClass.__declarity_location
         ) {
-            const hotClass = global.__DECLARITY_HOT_LOADER__[this.entityClass.__declarity_location].default
+            const HotEntityClass = global.__DECLARITY_HOT_LOADER__[this.entityClass.__declarity_location].default
 
-            if (hotClass.__declarity_id !== this._hotClassID) {
-                this._hotClassID = hotClass.__declarity_id
-                this._entity = new hotClass()
+            if (HotEntityClass.__declarity_id !== this._hotClassID) {
+                this._hotClassID = HotEntityClass.__declarity_id
+                this._entity = new HotEntityClass()
             }
 
         }
@@ -385,6 +385,7 @@ class EntityWrapper {
         if (!this._entity) {
             this._entity = new this.entityClass()
         }
+
         return this._entity
     }
 

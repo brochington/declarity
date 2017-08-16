@@ -116,10 +116,10 @@ export function removeChild({entityInstance}) {
 }
 
 export function removeChildren(childrenToRemove) {
-
     for (let i = 0; i < childrenToRemove.length; i++) {
         removeChild(childrenToRemove[i])
     }
+    return;
 }
 
 export function generateChildEntities(oldContent, newContent) {
