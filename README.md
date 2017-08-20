@@ -1,7 +1,6 @@
 # Declarity
 
 [![Build Status](https://travis-ci.org/brochington/declarity.svg?branch=master)](https://travis-ci.org/brochington/declarity)
-
 [![Coverage Status](https://coveralls.io/repos/github/brochington/declarity/badge.svg?branch=master)](https://coveralls.io/github/brochington/declarity?branch=master)
 
 ```
