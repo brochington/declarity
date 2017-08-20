@@ -3,24 +3,29 @@ import EntityWrapper from './EntityWrapper';
 
 let entityKeys = new Map();
 
-export const register = (configObj: {entityClass: any, children: any, props: ?Object}, context: ?Object): void => {
-    const {entityClass, children} = configObj;
-    const props = configObj.props || {};
+export const register = (
+  configObj: { entityClass: any, children: any, props: ?Object },
+  context: ?Object
+): void => {
+  const { entityClass, children } = configObj;
+  const props = configObj.props || {};
 
-    const newProps: Object = {key: 'parent', ...props};
+  const newProps: Object = { key: 'parent', ...props };
 
-    if (entityKeys.has(newProps.key)) {
-        const wrappedEntity: EntityWrapper = entityKeys.get(newProps.key)
-        wrappedEntity.updateParams(newProps, children, context);
-        wrappedEntity.update();
-    }
+  if (entityKeys.has(newProps.key)) {
+    const wrappedEntity: EntityWrapper = entityKeys.get(newProps.key);
+    wrappedEntity.updateParams(newProps, children, context);
+    wrappedEntity.update();
+  } else {
+    const wrappedEntity: EntityWrapper = new EntityWrapper(
+      entityClass,
+      newProps,
+      children
+    );
+    wrappedEntity.mount(newProps, children, context);
 
-    else {
-        const wrappedEntity: EntityWrapper = new EntityWrapper(entityClass, newProps, children);
-        wrappedEntity.mount(newProps, children, context);
+    entityKeys.set(newProps.key, wrappedEntity);
+  }
 
-        entityKeys.set(newProps.key, wrappedEntity)
-    }
-
-    // might want to return something here so that the mounted component can be dismounted later.
-}
+  // might want to return something here so that the mounted component can be dismounted later.
+};

@@ -1,5 +1,3 @@
-class System {
-
-}
+class System {}
 
 export default System;
