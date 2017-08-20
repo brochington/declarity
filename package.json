@@ -17,7 +17,7 @@
     "setup:watch": "npm run link && npm run watch",
     "test": " ./node_modules/karma/bin/karma start",
     "test:travis": "./node_modules/karma/bin/karma start --single-run",
-    "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls"
+    "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "repository": {
     "type": "git",

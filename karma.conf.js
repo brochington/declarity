@@ -86,7 +86,7 @@ module.exports = function(config) {
         concurrency: Infinity,
 
         coverageIstanbulReporter: {
-            reports: ['text-summary', 'html'],
+            reports: ['text-summary', 'html', 'lcov'],
             dir: path.join(__dirname, 'coverage'),
             fixWebpackSourcePaths: true,
             'report-config': {
