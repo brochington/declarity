@@ -229,8 +229,10 @@ class EntityWrapper {
 
       this._callingRender = false;
 
-      // If entityClassNames are same, then we can assume that this level didn't change.
-      // Can add extra checks for props later, or put those in the component.
+      /*
+      If entityClassNames are same, then we can assume that this level didn't change.
+      Can add extra checks for props later, or put those in the component.
+      */
       const oldComponentNames = this.childEntities.map(
         child => child.entityClass.name
       );
@@ -278,21 +280,6 @@ class EntityWrapper {
   };
 
   setState = (newState: any) => {
-    // if (this._callingWillMount) {
-    //     console.log('trying to call setState in willMount. This is a noop', this.entity);
-    //     return;
-    // }
-    //
-    // if (this._callingCreate) {
-    //     console.log('trying to call setState in create(). This is a noop', this.entity);
-    //     return;
-    // }
-    //
-    // if (this._callingUpdate) {
-    //     console.log('trying to call setState in update(). This is a noop. please have the update() method return any updated state.', this.entity);
-    //     return;
-    // }
-
     this.previousState = this.state;
 
     this.state = {
@@ -300,8 +287,8 @@ class EntityWrapper {
       ...newState,
     };
 
+    /* istanbul ignore if */
     if (this.shouldUpdate) {
-      // Note: Don't know if setting previous stuff here is proper.
       this.previousProps = this.props;
       this.previousChildren = this.children;
       this.update();
@@ -309,8 +296,6 @@ class EntityWrapper {
   };
 
   remove = () => {
-    // Figure out if anything needs to happen here.
-
     if (this.entity.hasOwnProperty('willUnmount')) {
       this._callingWillUnmount = true;
 
@@ -383,6 +368,7 @@ class EntityWrapper {
   }
 
   get entity() {
+    /* istanbul ignore if */
     if (
       global &&
       global.hasOwnProperty('__DECLARITY_HOT_LOADER__') &&
