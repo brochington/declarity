@@ -66,4 +66,28 @@ describe('EntityWrapper', function() {
       expect(spy.callCount).to.equal(3);
     });
   });
+
+  context('remove()', () => {
+    it('Calls lifecycle methods', () => {
+      const spy = sinon.spy();
+
+      class Entity {
+        willMount = noop;
+        create = noop;
+        didCreate = noop;
+        didMount = noop;
+        willUpdate = noop;
+        update = noop;
+        didUpdate = noop;
+        willUnmount = spy;
+        didUnmount = spy;
+      }
+
+      const entityWrapper = new EntityWrapper(Entity);
+      entityWrapper.mount({});
+      entityWrapper.remove();
+
+      expect(spy.callCount).to.equal(2);
+    });
+  });
 });

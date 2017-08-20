@@ -1,16 +1,23 @@
 /* @flow */
+import danger from './danger';
 import EntityWrapper from './EntityWrapper';
 
 let entityKeys = new Map();
 
-export const register = (
-  configObj: { entityClass: any, children: any, props: ?Object },
-  context: ?Object
-): void => {
-  const { entityClass, children } = configObj;
-  const props = configObj.props || {};
+type Props = {
+  key: string,
+};
 
-  const newProps: Object = { key: 'parent', ...props };
+type ConfigObj = {
+  entityClass: any,
+  children: any,
+  props: Props,
+};
+
+export const register = (configObj: ConfigObj, context: ?Object): void => {
+  const { entityClass, children, props } = configObj;
+
+  const newProps: Props = { key: 'parent', ...props };
 
   if (entityKeys.has(newProps.key)) {
     const wrappedEntity: EntityWrapper = entityKeys.get(newProps.key);
@@ -28,4 +35,13 @@ export const register = (
   }
 
   // might want to return something here so that the mounted component can be dismounted later.
+};
+
+export const deregister = (configObj: ConfigObj) => {
+  danger(
+    configObj.props.hasOwnProperty('key'),
+    'deregister: given entity does not have key prop'
+  );
+
+  entityKeys.delete(configObj.props.key);
 };

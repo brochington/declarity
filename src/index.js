@@ -2,11 +2,12 @@
 import importEntity from './Entity';
 
 /* functions */
-import { register } from './register';
+import { register, deregister } from './registration';
 import { createEntity } from './createEntity';
 
 export default {
   Entity: importEntity,
   register,
+  deregister,
   createEntity,
 };

@@ -1,11 +1,12 @@
 import Declarity from '../index';
 
-describe('Declarity', () => {
+describe('Declarity', function() {
   it('exists', () => {
     expect(Declarity).to.exist;
     expect(Declarity).to.have.property('register');
     expect(Declarity).to.have.property('createEntity');
   });
+
   describe('createEntity() -> ', () => {
     it('creates new entity class without children', () => {
       class TestEntity {}
@@ -25,6 +26,7 @@ describe('Declarity', () => {
       expect(result).to.have.property('entityClass');
       expect(new result.entityClass()).to.be.instanceof(TestEntity);
     });
+
     it('creates new entity class of type "entity"', () => {
       const testProps = {
         key: 'testEntity',
@@ -41,37 +43,93 @@ describe('Declarity', () => {
     });
 
     it('creates entity with children', () => {
-      class TestEntity1 {}
+      const testEntitySpy = sinon.spy();
 
-      class TestEntity2 {}
+      class TestEntity1 {
+        create = () => {
+          testEntitySpy();
+        };
+
+        render = ({ children }) => {
+          return children;
+        };
+      }
+
+      class TestEntity2 {
+        create = () => {
+          testEntitySpy();
+        };
+      }
+
+      const childEntity = Declarity.createEntity(TestEntity2, {
+        key: 'testEntity2',
+      });
+
+      const testEntity = Declarity.createEntity(
+        TestEntity1,
+        { key: 'testEntity1' },
+        childEntity
+      );
+
+      Declarity.register(testEntity);
+
+      Declarity.deregister(testEntity);
+
+      expect(testEntitySpy.calledTwice).to.equal(true);
     });
   });
+
   describe('register() -> ', () => {
-    it('registers entity', () => {
-      // console.log(sinon)
-      // const testEntitySpy = sinon.spy()
-      // class TestEntity1 {
-      //     create = () => {
-      //         testEntitySpy()
-      //     }
-      // }
-      //
-      // class TestEntity2 {
-      //     create = () => {
-      //         testEntitySpy()
-      //     }
-      // }
-      //
-      // const configObj = {
-      //     entityClass: TestEntity1,
-      //     children: Declarity.createEntity(TestEntity2, {key: 'testEntity2'}),
-      //     props: {
-      //         key: 'testEntity1'
-      //     }
-      // }
-      // Declarity.register(configObj)
-      // console.log(testEntitySpy)
-      // expect(testEntityCreateSpy.)
+    it('registering entity calls create()', () => {
+      const testEntitySpy = sinon.spy();
+
+      class TestEntity {
+        create = () => testEntitySpy();
+      }
+
+      const testEntity = Declarity.createEntity(TestEntity, {
+        key: 'testEntity10',
+      });
+
+      Declarity.register(testEntity);
+
+      Declarity.deregister(testEntity);
+
+      expect(testEntitySpy.calledOnce).to.equal(true);
+    });
+
+    it('registering the same entity multiple times updates tree', () => {
+      const createSpy = sinon.spy();
+      const updateSpy = sinon.spy();
+
+      class TestEntity1 {
+        create = () => createSpy();
+        update = () => updateSpy();
+        render = ({ children }) => children;
+      }
+
+      class TestEntity2 {
+        create = () => createSpy();
+        update = () => updateSpy();
+      }
+
+      const childEntity = Declarity.createEntity(TestEntity2, {
+        key: 'testEntity2',
+      });
+
+      const testEntity = Declarity.createEntity(
+        TestEntity1,
+        { key: 'testEntity1' },
+        childEntity
+      );
+
+      Declarity.register(testEntity);
+      Declarity.register(testEntity);
+
+      Declarity.deregister(testEntity);
+
+      expect(createSpy.calledTwice).to.equal(true);
+      expect(updateSpy.calledTwice).to.equal(true);
     });
   });
 });

@@ -31,7 +31,7 @@ import {
 } from './helpers/entityInstance';
 
 class EntityWrapper {
-  constructor(entityClass) {
+  constructor(entityClass: Object) {
     this.entityClass = entityClass;
   }
 
@@ -314,7 +314,7 @@ class EntityWrapper {
     if (this.entity.hasOwnProperty('willUnmount')) {
       this._callingWillUnmount = true;
 
-      const willUnmountState = this.entity.didCreate(this.getEntityParams());
+      const willUnmountState = this.entity.willUnmount(this.getEntityParams());
 
       this._callingWillUnmount = false;
 
