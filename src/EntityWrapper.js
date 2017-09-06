@@ -153,7 +153,7 @@ class EntityWrapper {
   update = () => {
     // shouldUpdate
     if (this.entity.hasOwnProperty('shouldUpdate')) {
-      const shouldUpdateResult = this.entity.shouldUpdate();
+      const shouldUpdateResult = this.entity.shouldUpdate(this.getEntityParams());
 
       if (typeof shouldUpdateResult === 'boolean') {
         if (!shouldUpdateResult) {
