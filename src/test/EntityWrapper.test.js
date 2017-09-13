@@ -1,7 +1,30 @@
 import EntityWrapper from '../EntityWrapper';
 import Declarity from '../index';
 
-const noop = () => {};
+const noop = (): void => {};
+const createCycleParamKeys = [
+  'props',
+  'children',
+  'context',
+  'setState',
+  'getParams',
+];
+const entityParamKeys = [
+  'previousProps',
+  'previousChildren',
+  'previousState',
+  'previousContext',
+  'props',
+  'children',
+  'context',
+  'state',
+  'setState',
+  'getParams',
+];
+
+const testParamFunc = (params, expectedParamKeys): void => {
+  expect(params).to.have.keys(expectedParamKeys);
+};
 
 describe('EntityWrapper', function() {
   context('Contruction', () => {
@@ -45,6 +68,23 @@ describe('EntityWrapper', function() {
       expect(spy.callCount).to.equal(5);
     });
 
+    it('called methods have correct params', () => {
+      class Entity {
+        willMount = params => testParamFunc(params, createCycleParamKeys);
+        create = params => testParamFunc(params, createCycleParamKeys);
+        didCreate = params => testParamFunc(params, entityParamKeys);
+        didMount = params => testParamFunc(params, entityParamKeys);
+        willUpdate = noop;
+        update = noop;
+        didUpdate = noop;
+        render = params => testParamFunc(params, entityParamKeys);
+      }
+
+      const entityWrapper = new EntityWrapper(Entity);
+
+      entityWrapper.mount({});
+    });
+
     it('Calls systems if present', () => {
       const spy = sinon.spy();
 
@@ -75,6 +115,19 @@ describe('EntityWrapper', function() {
   });
 
   context('shouldUpdate()', () => {
+    it('has correct params passed', () => {
+      class Entity {
+        shouldUpdate = params => {
+          testParamFunc(params, entityParamKeys);
+          return true;
+        };
+      }
+
+      const entityWrapper = new EntityWrapper(Entity);
+      entityWrapper.mount({});
+      entityWrapper.update();
+    });
+
     it('Updates when shouldUpdate returns true', () => {
       const spy = sinon.spy();
 
@@ -136,6 +189,22 @@ describe('EntityWrapper', function() {
       expect(spy.callCount).to.equal(3);
     });
 
+    it('Called methods have correct params', () => {
+      class Entity {
+        willMount = noop;
+        create = noop;
+        didCreate = noop;
+        didMount = noop;
+        willUpdate = params => testParamFunc(params, entityParamKeys);
+        update = params => testParamFunc(params, entityParamKeys);
+        didUpdate = params => testParamFunc(params, entityParamKeys);
+      }
+
+      const entityWrapper = new EntityWrapper(Entity);
+      entityWrapper.mount({});
+      entityWrapper.update();
+    });
+
     it('Calls systems if present', () => {
       const spy = sinon.spy();
 
@@ -187,6 +256,24 @@ describe('EntityWrapper', function() {
       entityWrapper.remove();
 
       expect(spy.callCount).to.equal(2);
+    });
+
+    it('Called methods have correct params', () => {
+      class Entity {
+        willMount = noop;
+        create = noop;
+        didCreate = noop;
+        didMount = noop;
+        willUpdate = noop;
+        update = noop;
+        didUpdate = noop;
+        willUnmount = params => testParamFunc(params, entityParamKeys);
+        didUnmount = params => testParamFunc(params, entityParamKeys);
+      }
+
+      const entityWrapper = new EntityWrapper(Entity);
+      entityWrapper.mount({});
+      entityWrapper.update();
     });
   });
 });

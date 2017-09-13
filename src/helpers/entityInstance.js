@@ -36,11 +36,11 @@ export function diffComponents(oldContent, newContent) {
   for (let i = 0; i < oldContent.length; i++) {
     const c = oldContent[i];
 
-    if (newHashMap.hasOwnProperty(c.key)) {
+    if (Object.prototype.hasOwnProperty.call(newHashMap, c.key)) {
       updated.push([c, newHashMap[c.key]]);
     }
 
-    if (!newHashMap.hasOwnProperty(c.key)) {
+    if (!Object.prototype.hasOwnProperty.call(newHashMap, c.key)) {
       removed.push(c);
     }
   }
@@ -149,15 +149,22 @@ export const getRenderContent = (entity, params) => {
 };
 
 export const callMethodInSystems = (methodName, systemParams) => {
-  return systemParams.props.systems.reduce((acc, system, i) => {
-    if (has(methodName, system) && is(Function, system[methodName])) {
-      const systemResult = system[methodName](acc);
+  let { systems } = systemParams.props;
+  let newParams = Object.assign({}, systemParams);
 
-      if (is(Object, systemResult)) {
-        return { ...acc, state: { ...acc.state, ...systemResult } };
+  for (let i = 0; i < systems.length; i++) {
+    let system = systems[i];
+
+    if (system[methodName] instanceof Function) {
+      const systemResult = system[methodName](newParams);
+
+      if (typeof systemResult === 'object') {
+        newParams = Object.assign({}, newParams, {
+          state: Object.assign({}, newParams.state, systemResult),
+        });
       }
     }
+  }
 
-    return acc;
-  }, systemParams);
+  return newParams;
 };

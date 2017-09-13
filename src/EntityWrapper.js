@@ -50,7 +50,7 @@ class EntityWrapper {
     };
 
     // willMount
-    if (this.entity.hasOwnProperty('willMount')) {
+    if (has('willMount', this.entity)) {
       this._callingWillMount = true;
 
       this.entity.willMount(passedParams);
@@ -63,7 +63,7 @@ class EntityWrapper {
     }
 
     // create
-    if (this.entity.hasOwnProperty('create')) {
+    if (has('create', this.entity)) {
       this._callingCreate = true;
       const initState = this.entity.create(passedParams);
 
@@ -81,7 +81,7 @@ class EntityWrapper {
     }
 
     // didCreate
-    if (this.entity.hasOwnProperty('didCreate')) {
+    if (has('didCreate', this.entity)) {
       this._callingDidCreate = true;
 
       const didCreateState = this.entity.didCreate(this.getEntityParams());
@@ -105,7 +105,7 @@ class EntityWrapper {
     this.shouldUpdate = true;
 
     // mount the children
-    if (this.entity.hasOwnProperty('render')) {
+    if (has('render', this.entity)) {
       //TODO: will need to add checks for other values besides <Entity> and null in render array.
       let childContext = this.context;
 
@@ -141,7 +141,7 @@ class EntityWrapper {
     }
 
     // didMount
-    if (this.entity.hasOwnProperty('didMount')) {
+    if (has('didMount', this.entity)) {
       this.entity.didMount(this.getEntityParams());
       //TODO: should this method adjust state?
       if (has('systems', this.props)) {
@@ -152,8 +152,10 @@ class EntityWrapper {
 
   update = () => {
     // shouldUpdate
-    if (this.entity.hasOwnProperty('shouldUpdate')) {
-      const shouldUpdateResult = this.entity.shouldUpdate(this.getEntityParams());
+    if (has('shouldUpdate', this.entity)) {
+      const shouldUpdateResult = this.entity.shouldUpdate(
+        this.getEntityParams()
+      );
 
       if (typeof shouldUpdateResult === 'boolean') {
         if (!shouldUpdateResult) {
@@ -165,7 +167,7 @@ class EntityWrapper {
     this.shouldUpdate = false;
 
     // willUpdate
-    if (this.entity.hasOwnProperty('willUpdate')) {
+    if (has('willUpdate', this.entity)) {
       this._callingWillUpdate = true;
       this.entity.willUpdate(this.getEntityParams());
       //TODO: should this method adjust state?
@@ -176,7 +178,7 @@ class EntityWrapper {
     }
 
     // update
-    if (this.entity.hasOwnProperty('update')) {
+    if (has('update', this.entity)) {
       this._callingUpdate = true;
       const entityParams = this.getEntityParams();
 
@@ -189,7 +191,6 @@ class EntityWrapper {
               state: { ...entityParams.state, ...updatedState },
             }
           : this.getEntityParams();
-
         const newSystemsParams = callMethodInSystems('update', systemsParams);
 
         updatedState = { ...updatedState, ...newSystemsParams.state };
@@ -212,7 +213,7 @@ class EntityWrapper {
 
       let childContext = this.context;
 
-      if (this.entity.hasOwnProperty('getChildContext')) {
+      if (has('getChildContext', this.entity)) {
         const childContextVal = this.entity.getChildContext(
           this.getEntityParams()
         );
@@ -254,7 +255,7 @@ class EntityWrapper {
     }
 
     // didUpdate
-    if (this.entity.hasOwnProperty('didUpdate')) {
+    if (has('didUpdate', this.entity)) {
       this._callingDidUpdate = true;
 
       const didUpdateState = this.entity.didUpdate(this.getEntityParams());
@@ -296,7 +297,7 @@ class EntityWrapper {
   };
 
   remove = () => {
-    if (this.entity.hasOwnProperty('willUnmount')) {
+    if (has('willUnmount', this.entity)) {
       this._callingWillUnmount = true;
 
       const willUnmountState = this.entity.willUnmount(this.getEntityParams());
@@ -321,11 +322,11 @@ class EntityWrapper {
       }
     }
 
-    if (this.entity.hasOwnProperty('render')) {
+    if (has('render', this.entity)) {
       removeChildren(this.childEntities);
     }
 
-    if (this.entity.hasOwnProperty('didUnmount')) {
+    if (has('didUnmount', this.entity)) {
       this.entity.didUnmount(this.getEntityParams());
 
       if (has('systems', this.props)) {
