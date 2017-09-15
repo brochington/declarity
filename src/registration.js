@@ -2,7 +2,10 @@
 import danger from './danger';
 import EntityWrapper from './EntityWrapper';
 
-let entityKeys = new Map();
+let registeredEntities: Map<string, EntityWrapper> = new Map();
+
+export const getRegisteredEntities = (): Map<string, EntityWrapper> =>
+  registeredEntities;
 
 type Props = {
   key: string,
@@ -19,8 +22,8 @@ export const register = (configObj: ConfigObj, context: ?Object): void => {
 
   const newProps: Props = { key: 'parent', ...props };
 
-  if (entityKeys.has(newProps.key)) {
-    const wrappedEntity: EntityWrapper = entityKeys.get(newProps.key);
+  if (registeredEntities.has(newProps.key)) {
+    const wrappedEntity: EntityWrapper = registeredEntities.get(newProps.key);
     wrappedEntity.updateParams(newProps, children, context);
     wrappedEntity.update();
   } else {
@@ -31,7 +34,7 @@ export const register = (configObj: ConfigObj, context: ?Object): void => {
     );
     wrappedEntity.mount(newProps, children, context);
 
-    entityKeys.set(newProps.key, wrappedEntity);
+    registeredEntities.set(newProps.key, wrappedEntity);
   }
 
   // might want to return something here so that the mounted component can be dismounted later.
@@ -43,5 +46,11 @@ export const deregister = (configObj: ConfigObj) => {
     'deregister: given entity does not have key prop'
   );
 
-  entityKeys.delete(configObj.props.key);
+  const wrappedEntity: EntityWrapper = registeredEntities.get(
+    configObj.props.key
+  );
+
+  wrappedEntity.remove();
+
+  registeredEntities.delete(configObj.props.key);
 };

@@ -1,4 +1,5 @@
 import Declarity from '../index';
+import { getRegisteredEntities } from '../registration';
 
 describe('Declarity', function() {
   it('exists', () => {
@@ -80,6 +81,41 @@ describe('Declarity', function() {
   });
 
   describe('register() -> ', () => {
+    it('registered entity is added to entities map', () => {
+      const spy = sinon.spy();
+
+      class TestEntity {
+        create = () => {};
+        willUnmount = spy;
+        didUnmount = spy;
+      }
+
+      const entityKey = 'testEntity10';
+
+      const testEntity = Declarity.createEntity(TestEntity, {
+        key: entityKey,
+      });
+
+      Declarity.register(testEntity);
+
+      const entityMap = getRegisteredEntities();
+      expect(entityMap).to.be.instanceof(Map);
+
+      for (let key of entityMap.keys()) {
+        expect(key).to.equal(entityKey);
+      }
+
+      Declarity.deregister(testEntity);
+
+      const deregisteredEntityMap = getRegisteredEntities();
+
+      expect(entityMap).to.be.instanceof(Map);
+
+      expect(deregisteredEntityMap.has(entityKey)).to.equal(false);
+
+      expect(spy.calledTwice).to.equal(true);
+    });
+
     it('registering entity calls create()', () => {
       const testEntitySpy = sinon.spy();
 
@@ -88,7 +124,7 @@ describe('Declarity', function() {
       }
 
       const testEntity = Declarity.createEntity(TestEntity, {
-        key: 'testEntity10',
+        key: 'testEntity11',
       });
 
       Declarity.register(testEntity);

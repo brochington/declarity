@@ -1,5 +1,5 @@
 // TODO: figure out a way to make systems lifecycle methods work if original entity doesn't have method.
-const noop = () => {};
+const noop = (): void => {};
 
 class Entity {
   willMount = noop;
