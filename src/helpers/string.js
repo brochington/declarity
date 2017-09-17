@@ -1,7 +1,7 @@
 /* @flow */
 import { sampleSize } from 'lodash';
 
-const chars = 'abcdefghijklmnopqrstufwxyzABCDEFGHIJKLMNOPQRSTUFWXYZ1234567890'.split(
+const chars: Array<string> = 'abcdefghijklmnopqrstufwxyzABCDEFGHIJKLMNOPQRSTUFWXYZ1234567890'.split(
   ''
 );
 
