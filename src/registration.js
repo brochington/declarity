@@ -2,7 +2,8 @@
 import danger from './danger';
 import EntityWrapper from './EntityWrapper';
 
-let registeredEntities: Map<string, EntityWrapper> = new Map();
+const registeredEntities: Map<string, EntityWrapper> = new Map();
+const registeredEntitiesLock = new Set();
 
 export const getRegisteredEntities = (): Map<string, EntityWrapper> =>
   registeredEntities;
@@ -17,30 +18,39 @@ type ConfigObj = {
   props: Props,
 };
 
-export const register = (configObj: ConfigObj, context: ?Object): void => {
+export const register = (configObj: ConfigObj, context: ?Object): EntityWrapper => {
   const { entityClass, children, props } = configObj;
 
   const newProps: Props = { key: 'parent', ...props };
 
   if (registeredEntities.has(newProps.key)) {
     const wrappedEntity: EntityWrapper = registeredEntities.get(newProps.key);
+
     wrappedEntity.updateParams(newProps, children, context);
     wrappedEntity.update();
+
+    return wrappedEntity;
   } else {
     const wrappedEntity: EntityWrapper = new EntityWrapper(
       entityClass,
       newProps,
       children
     );
-    wrappedEntity.mount(newProps, children, context);
 
-    registeredEntities.set(newProps.key, wrappedEntity);
+    if (!registeredEntitiesLock.has(newProps.key)) {
+      registeredEntitiesLock.add(newProps.key);
+
+      wrappedEntity.mount(newProps, children, context);
+
+      registeredEntities.set(newProps.key, wrappedEntity);
+      registeredEntitiesLock.delete(newProps.key);
+    }
+
+    return wrappedEntity;
   }
-
-  // might want to return something here so that the mounted component can be dismounted later.
 };
 
-export const deregister = (configObj: ConfigObj) => {
+export const deregister = (configObj: ConfigObj): boolean => {
   danger(
     configObj.props.hasOwnProperty('key'),
     'deregister: given entity does not have key prop'
@@ -52,5 +62,7 @@ export const deregister = (configObj: ConfigObj) => {
 
   wrappedEntity.remove();
 
-  registeredEntities.delete(configObj.props.key);
+  const deleted = registeredEntities.delete(configObj.props.key);
+
+  return deleted;
 };
