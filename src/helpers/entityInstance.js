@@ -28,7 +28,7 @@ export function diffComponents(oldContent, newContent) {
   for (let i = 0; i < newContent.length; i++) {
     const c = newContent[i];
 
-    if (!oldHashMap.hasOwnProperty(c.key)) {
+    if (!Object.prototype.hasOwnProperty.call(oldHashMap, c.key)) {
       added.push(c);
     }
   }
@@ -129,9 +129,9 @@ export function removeChildren(childrenToRemove) {
 export function generateChildEntities(oldContent, newContent) {
   const { added, updated, removed } = diffComponents(oldContent, newContent);
 
+  removed.length > 0 && removeChildren(removed);
   const addedEntities = mountChildren(added);
   const updatedEntities = updateChildren(updated);
-  removed.length > 0 && removeChildren(removed);
 
   return addedEntities.concat(updatedEntities);
 }

@@ -183,7 +183,7 @@ class EntityWrapper {
       const entityParams = this.getEntityParams();
 
       let updatedState = this.entity.update({ ...this.getEntityParams() });
-      // console.log('updatedState', updatedState, this.entity)
+
       if (has('systems', entityParams.props)) {
         const systemsParams = updatedState
           ? {
@@ -230,28 +230,10 @@ class EntityWrapper {
 
       this._callingRender = false;
 
-      /*
-      If entityClassNames are same, then we can assume that this level didn't change.
-      Can add extra checks for props later, or put those in the component.
-      */
-      const oldComponentNames = this.childEntities.map(
-        child => child.entityClass.name
+      this.childEntities = generateChildEntities(
+        this.childEntities,
+        newContent
       );
-      const newComponentNames = newContent.map(child => child.entityClassName);
-
-      if (equals(oldComponentNames, newComponentNames)) {
-        // No add/remove of components is needed.
-        // Just update Props.
-
-        this.childEntities = updateChildren(
-          zip(this.childEntities, newContent)
-        );
-      } else {
-        this.childEntities = generateChildEntities(
-          this.childEntities,
-          newContent
-        );
-      }
     }
 
     // didUpdate
