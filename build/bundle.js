@@ -3938,7 +3938,7 @@ var EntityWrapper = function () {
         var entityParams = _this.getEntityParams();
 
         var updatedState = _this.entity.update((0, _extends3.default)({}, _this.getEntityParams()));
-        // console.log('updatedState', updatedState, this.entity)
+
         if ((0, _ramda.has)('systems', entityParams.props)) {
           var systemsParams = updatedState ? (0, _extends3.default)({}, entityParams, {
             state: (0, _extends3.default)({}, entityParams.state, updatedState)
@@ -3976,31 +3976,6 @@ var EntityWrapper = function () {
         });
 
         _this._callingRender = false;
-
-        /*
-        If entityClassNames are same, then we can assume that this level didn't change.
-        Can add extra checks for props later, or put those in the component.
-        */
-        var oldComponentNames = _this.childEntities.map(function (child) {
-          return child.entityClass.name;
-        });
-        var newComponentNames = newContent.map(function (child) {
-          return child.entityClassName;
-        });
-
-        // if (equals(oldComponentNames, newComponentNames)) {
-        //   // No add/remove of components is needed.
-        //   // Just update Props.
-        //
-        //   this.childEntities = updateChildren(
-        //     zip(this.childEntities, newContent)
-        //   );
-        // } else {
-        //   this.childEntities = generateChildEntities(
-        //     this.childEntities,
-        //     newContent
-        //   );
-        // }
 
         _this.childEntities = (0, _entityInstance.generateChildEntities)(_this.childEntities, newContent);
       }
@@ -14984,7 +14959,7 @@ function diffComponents(oldContent, newContent) {
   for (var i = 0; i < newContent.length; i++) {
     var c = newContent[i];
 
-    if (!oldHashMap.hasOwnProperty(c.key)) {
+    if (!Object.prototype.hasOwnProperty.call(oldHashMap, c.key)) {
       added.push(c);
     }
   }
@@ -15108,15 +15083,23 @@ var callMethodInSystems = exports.callMethodInSystems = function callMethodInSys
 
   for (var i = 0; i < systems.length; i++) {
     var system = systems[i];
+    var systemResult = void 0;
 
-    if (system[methodName] instanceof Function) {
-      var systemResult = system[methodName](newParams);
+    /*
+      Accept a function as well as an object for systems.
+      If passed a function, then call it on create and update.
+    */
 
-      if ((typeof systemResult === 'undefined' ? 'undefined' : (0, _typeof3.default)(systemResult)) === 'object') {
-        newParams = (0, _assign2.default)({}, newParams, {
-          state: (0, _assign2.default)({}, newParams.state, systemResult)
-        });
-      }
+    if (system instanceof Function && (methodName === 'create ' || methodName === 'update')) {
+      systemResult = system(newParams);
+    } else if (system[methodName] instanceof Function) {
+      systemResult = system[methodName](newParams);
+    }
+
+    if ((typeof systemResult === 'undefined' ? 'undefined' : (0, _typeof3.default)(systemResult)) === 'object') {
+      newParams = (0, _assign2.default)({}, newParams, {
+        state: (0, _assign2.default)({}, newParams.state, systemResult)
+      });
     }
   }
 

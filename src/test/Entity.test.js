@@ -1,6 +1,6 @@
 import Entity from '../Entity';
 
-describe('Entity ->', function() {
+describe('Entity', function() {
   it('exists', () => {
     const entity = new Entity();
 

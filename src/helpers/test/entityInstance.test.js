@@ -1,7 +1,7 @@
 import * as entityInstanceHelpers from '../entityInstance';
 
-describe('Entity Instance helpers ->', () => {
-  describe('diffComponents() -> ', () => {
+describe('Entity Instance helpers', () => {
+  describe('diffComponents()', () => {
     it('has correct diff output', () => {
       const oldContent = [
         { key: '1' },
@@ -26,7 +26,7 @@ describe('Entity Instance helpers ->', () => {
     });
   });
 
-  describe('mountChild() ->', () => {
+  describe('mountChild()', () => {
     it('calls entityInstance.mount()', () => {
       const callback = sinon.spy();
       const childEntity = {
@@ -41,7 +41,7 @@ describe('Entity Instance helpers ->', () => {
     });
   });
 
-  describe('prepareChildContentForMounting() -> ', () => {
+  describe('prepareChildContentForMounting()', () => {
     it('returns correct content', () => {
       const props = { key: 'testKey' };
       const children = [];
@@ -167,7 +167,7 @@ describe('Entity Instance helpers ->', () => {
     });
   });
 
-  describe('getRenderContent() ->', () => {
+  describe('getRenderContent()', () => {
     it('handles entity with no render method', () => {
       const entity = {};
       const renderContent = entityInstanceHelpers.getRenderContent(
@@ -179,7 +179,7 @@ describe('Entity Instance helpers ->', () => {
     });
 
     it('returns no content from entity.render call ', () => {
-      const returnVals = [null, undefined];
+      const returnVals = [null, undefined]; // eslint-disable-line
       const entities = returnVals.map(val => ({
         render: () => {
           return val;
@@ -196,7 +196,7 @@ describe('Entity Instance helpers ->', () => {
       });
     });
 
-    it('returns correct content ', () => {
+    it('returns correct content', () => {
       const args = [
         [[{}], null],
         [{ key: 'test' }, null],
@@ -211,6 +211,45 @@ describe('Entity Instance helpers ->', () => {
         );
         expect(renderContent).to.be.instanceof(Array);
         expect(renderContent).to.have.lengthOf(1);
+      });
+    });
+  });
+
+  describe('callMethodInSystems()', () => {
+    context('System is object', () => {
+      it('Calls system methods', () => {
+        const spy = sinon.spy();
+        const testParams = {
+          props: {
+            systems: [{
+              create: spy,
+              update: spy,
+            }],
+          },
+        }
+
+        entityInstanceHelpers.callMethodInSystems('create', testParams);
+        entityInstanceHelpers.callMethodInSystems('update', testParams);
+        entityInstanceHelpers.callMethodInSystems('willMount', testParams);
+
+        expect(spy.calledTwice).to.equal(true);
+      });
+    });
+
+    context('System is function', () => {
+      it('Calls system methods', () => {
+        const spy = sinon.spy();
+        const testParams = {
+          props: {
+            systems: [spy],
+          },
+        };
+
+        entityInstanceHelpers.callMethodInSystems('create', testParams);
+        entityInstanceHelpers.callMethodInSystems('update', testParams);
+        entityInstanceHelpers.callMethodInSystems('willMount', testParams);
+
+        expect(spy.calledTwice).to.equal(true);
       });
     });
   });

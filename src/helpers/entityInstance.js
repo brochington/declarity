@@ -154,15 +154,23 @@ export const callMethodInSystems = (methodName, systemParams) => {
 
   for (let i = 0; i < systems.length; i++) {
     let system = systems[i];
+    let systemResult;
 
-    if (system[methodName] instanceof Function) {
-      const systemResult = system[methodName](newParams);
+    /*
+      Accept a function as well as an object for systems.
+      If passed a function, then call it on create and update.
+    */
 
-      if (typeof systemResult === 'object') {
-        newParams = Object.assign({}, newParams, {
-          state: Object.assign({}, newParams.state, systemResult),
-        });
-      }
+    if (system instanceof Function && (methodName === 'create' || methodName === 'update')) {
+      systemResult = system(newParams);
+    } else if (system[methodName] instanceof Function) {
+      systemResult = system[methodName](newParams);
+    }
+
+    if (typeof systemResult === 'object') {
+      newParams = Object.assign({}, newParams, {
+        state: Object.assign({}, newParams.state, systemResult),
+      });
     }
   }
 

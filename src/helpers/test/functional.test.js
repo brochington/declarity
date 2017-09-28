@@ -1,9 +1,9 @@
 import { rejectNil, contentByKey } from '../functional.js';
 
-describe('functional helpers -> ', function() {
+describe('functional helpers ', function() {
   context('rejectNil()', () => {
     it('rejects nil values', function() {
-      const originalContent = ['a', 2, null, undefined, {}, null, undefined];
+      const originalContent = ['a', 2, null, undefined, {}, null, undefined]; // eslint-disable-line
       const newContent = rejectNil(originalContent);
 
       expect(newContent).to.eql(['a', 2, {}]);

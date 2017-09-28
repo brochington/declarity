@@ -8,7 +8,7 @@ describe('Declarity', function() {
     expect(Declarity).to.have.property('createEntity');
   });
 
-  describe('createEntity() -> ', () => {
+  describe('createEntity()', () => {
     it('creates new entity class without children', () => {
       class TestEntity {}
 
@@ -80,7 +80,7 @@ describe('Declarity', function() {
     });
   });
 
-  describe('register() -> ', () => {
+  describe('register()', () => {
     it('registered entity is added to entities map', () => {
       const spy = sinon.spy();
 
