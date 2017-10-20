@@ -18,7 +18,10 @@ type ConfigObj = {
   props: Props,
 };
 
-export const register = (configObj: ConfigObj, context: ?Object): EntityWrapper => {
+export const register = (
+  configObj: ConfigObj,
+  context: ?Object
+): EntityWrapper => {
   const { entityClass, children, props } = configObj;
 
   const newProps: Props = { key: 'parent', ...props };

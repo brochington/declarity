@@ -14997,15 +14997,7 @@ var updateChild = exports.updateChild = function updateChild(_ref) {
   var newChildren = (0, _functional.isArray)(newChild.children) ? (0, _ramda.flatten)(newChild.children) : [];
   var newContext = (0, _ramda.isNil)(newChild.context) ? {} : newChild.context;
 
-  oldChild.entityInstance.previousProps = oldChild.props;
-  oldChild.entityInstance.props = newProps;
-
-  oldChild.entityInstance.previousChildren = oldChild.children;
-  oldChild.entityInstance.children = newChildren;
-
-  oldChild.entityInstance.previousContext = oldChild.context;
-  oldChild.entityInstance.context = newContext;
-
+  oldChild.entityInstance.updateParams(newProps, newChildren, newContext);
   oldChild.entityInstance.update();
 
   return oldChild;
@@ -15090,7 +15082,7 @@ var callMethodInSystems = exports.callMethodInSystems = function callMethodInSys
       If passed a function, then call it on create and update.
     */
 
-    if (system instanceof Function && (methodName === 'create ' || methodName === 'update')) {
+    if (system instanceof Function && (methodName === 'create' || methodName === 'update')) {
       systemResult = system(newParams);
     } else if (system[methodName] instanceof Function) {
       systemResult = system[methodName](newParams);

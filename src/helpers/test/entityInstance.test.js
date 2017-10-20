@@ -100,6 +100,7 @@ describe('Entity Instance helpers', () => {
 
       const oldChild = {
         entityInstance: {
+          updateParams: callback,
           update: callback,
         },
       };
@@ -112,7 +113,7 @@ describe('Entity Instance helpers', () => {
 
       const result = entityInstanceHelpers.updateChild([oldChild, newChild]);
 
-      expect(callback.calledOnce).to.equal(true);
+      expect(callback.calledTwice).to.equal(true);
       expect(result).to.eql(oldChild);
     });
   });
@@ -221,12 +222,14 @@ describe('Entity Instance helpers', () => {
         const spy = sinon.spy();
         const testParams = {
           props: {
-            systems: [{
-              create: spy,
-              update: spy,
-            }],
+            systems: [
+              {
+                create: spy,
+                update: spy,
+              },
+            ],
           },
-        }
+        };
 
         entityInstanceHelpers.callMethodInSystems('create', testParams);
         entityInstanceHelpers.callMethodInSystems('update', testParams);
