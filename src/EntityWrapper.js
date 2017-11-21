@@ -33,6 +33,7 @@ import {
 class EntityWrapper {
   constructor(entityClass: Object) {
     this.entityClass = entityClass;
+    this._savedStateUpdates = [];
   }
 
   mount = (props, children, context = {}) => {
@@ -102,7 +103,9 @@ class EntityWrapper {
       }
     }
 
-    this.shouldUpdate = true;
+    this._mounting = true;
+
+    // this.shouldUpdate = true;
 
     // mount the children
     if (has('render', this.entity)) {
@@ -138,6 +141,13 @@ class EntityWrapper {
       }
     } else {
       this.childEntities = [];
+    }
+
+    this._mounting = false;
+    this.shouldUpdate = true;
+
+    if (this._savedStateUpdates.length > 0) {
+      this._savedStateUpdates.map(this.setState);
     }
 
     // didMount
@@ -263,6 +273,11 @@ class EntityWrapper {
   };
 
   setState = (newState: any) => {
+    if (this._mounting) {
+      this._savedStateUpdates.push(newState);
+      return;
+    }
+
     this.previousState = this.state;
 
     this.state = {

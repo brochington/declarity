@@ -112,6 +112,47 @@ describe('EntityWrapper', function() {
 
       expect(spy.calledOnce).to.equal(true);
     });
+
+    it('Caches setState calls when rendering children', (done) => {
+      const testState = {
+        test: 'state',
+      };
+
+      class ChildEntity {
+        create = ({ props }) => {
+          props.passedSetState(testState);
+        }
+      }
+
+      class TestEntity {
+        create = ({ setState }) => {
+          const setStateSpy = sinon.spy(setState);
+
+          return { setStateSpy }
+        }
+        render = ({ state, setState }) => {
+          return Declarity.createEntity(ChildEntity, {
+            key: 'childEntity',
+            passedSetState: state.setStateSpy,
+          });
+        }
+
+        didMount = ({ state }) => {
+          const { setStateSpy } = state;
+
+          expect(setStateSpy.calledOnce).to.equal(true);
+          expect(state).to.include(testState);
+          
+          done();
+        }
+      }
+
+      const testEntity = Declarity.createEntity(TestEntity, { key: 'testEntity' });
+
+      Declarity.register(testEntity);
+
+      Declarity.deregister(testEntity);
+    });
   });
 
   context('shouldUpdate()', () => {
@@ -213,6 +254,7 @@ describe('EntityWrapper', function() {
           spy();
         },
       };
+
       class TestEntity {
         render = () => {
           return Declarity.createEntity('entity', {

@@ -3864,7 +3864,9 @@ var EntityWrapper = function () {
         }
       }
 
-      _this.shouldUpdate = true;
+      _this._mounting = true;
+
+      // this.shouldUpdate = true;
 
       // mount the children
       if ((0, _ramda.has)('render', _this.entity)) {
@@ -3895,6 +3897,13 @@ var EntityWrapper = function () {
         }
       } else {
         _this.childEntities = [];
+      }
+
+      _this._mounting = false;
+      _this.shouldUpdate = true;
+
+      if (_this._savedStateUpdates.length > 0) {
+        _this._savedStateUpdates.map(_this.setState);
       }
 
       // didMount
@@ -4005,6 +4014,11 @@ var EntityWrapper = function () {
     };
 
     this.setState = function (newState) {
+      if (_this._mounting) {
+        _this._savedStateUpdates.push(newState);
+        return;
+      }
+
       _this.previousState = _this.state;
 
       _this.state = (0, _extends3.default)({}, _this.state, newState);
@@ -4090,6 +4104,7 @@ var EntityWrapper = function () {
     };
 
     this.entityClass = entityClass;
+    this._savedStateUpdates = [];
   }
 
   (0, _createClass3.default)(EntityWrapper, [{
@@ -14949,6 +14964,7 @@ var _EntityWrapper2 = _interopRequireDefault(_EntityWrapper);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function diffComponents(oldContent, newContent) {
+  // console.log('oldContent', oldContent);
   var newHashMap = (0, _functional.contentByKey)(newContent);
   var oldHashMap = (0, _functional.contentByKey)(oldContent);
 
